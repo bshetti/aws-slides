@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Economics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #050D1A;
+      color: #fff;
+      display: flex; flex-direction: column;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(rgba(56,189,248,0.09) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -15%; left: -5%;
+      width: 55%; height: 70%;
+      background: radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    @keyframes fade-up  { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none} }
+    @keyframes fade-in  { from{opacity:0}to{opacity:1} }
+    @keyframes bar-grow { from{width:0}to{width:var(--w)} }
+    @keyframes row-in   { from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none} }
+
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding: 17px 45px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow {
+      font-size: 9px;
+      font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 0.2rem;
+    }
+    .bar-title {
+      font-size: 28px;
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+    }
+    .bar-title .hl {
+      background: linear-gradient(135deg,#38BDF8,#BAE6FD);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .bar-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.38); font-weight: 400; margin-top: 0.15rem;
+    }
+
+    .main {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 32px 45px;
+      gap: 13px;
+      max-width: 1100px;
+      width: 100%;
+      align-self: center;
+    }
+
+    .funnel-row {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr 1fr;
+      align-items: center;
+      gap: 26px;
+      padding: 17px 23px;
+      border-radius: 12px;
+      border: 1px solid;
+      opacity: 0;
+    }
+    .funnel-row.r1 {
+      background: rgba(255,255,255,0.025);
+      border-color: rgba(74,122,155,0.4);
+      animation: row-in 0.5s ease forwards 0.3s;
+    }
+    .funnel-row.r2 {
+      background: rgba(56,189,248,0.03);
+      border-color: rgba(56,189,248,0.3);
+      animation: row-in 0.5s ease forwards 0.55s;
+    }
+    .funnel-row.r3 {
+      background: rgba(56,189,248,0.06);
+      border-color: rgba(56,189,248,0.55);
+      animation: row-in 0.5s ease forwards 0.8s;
+    }
+
+    .bar-wrap {
+      height: 45px;
+      display: flex; align-items: center;
+    }
+    .bar {
+      height: 100%; border-radius: 5px;
+      --w: 0%;
+      width: 0;
+    }
+    .r1 .bar { --w:100%; background:rgba(74,122,155,0.38); animation: bar-grow 0.7s cubic-bezier(0.2,0,0.2,1) forwards 0.5s; }
+    .r2 .bar { --w:52%;  background:rgba(56,189,248,0.5);  animation: bar-grow 0.7s cubic-bezier(0.2,0,0.2,1) forwards 0.75s; }
+    .r3 .bar { --w:15%;  background:#38BDF8; box-shadow:0 0 14px rgba(56,189,248,0.45); animation: bar-grow 0.7s cubic-bezier(0.2,0,0.2,1) forwards 1s; }
+
+    .row-label { font-size: 20px; font-weight: 700; margin-bottom: 0.25rem; }
+    .r1 .row-label { color: rgba(255,255,255,0.45); }
+    .r2 .row-label { color: #BAE6FD; }
+    .r3 .row-label { color: #38BDF8; }
+    .row-sub { font-size: 9px; color: rgba(255,255,255,0.35); line-height: 1.45; }
+    .row-sub .accent { color: #38BDF8; }
+
+    .row-meta { font-size: 10px; color: rgba(255,255,255,0.35); line-height: 1.5; }
+    .row-meta strong { font-size: 13px; font-weight: 800; display: block; margin-bottom: 0.2rem; }
+    .r1 .row-meta strong { color: rgba(255,255,255,0.4); }
+    .r2 .row-meta strong { color: #BAE6FD; }
+    .r3 .row-meta strong { color: #38BDF8; }
+
+    .funnel-connector {
+      text-align: center;
+      font-size: 9px;
+      color: rgba(56,189,248,0.3);
+      letter-spacing: 0.04em;
+      padding: 3px 0;
+      opacity: 0;
+    }
+    .funnel-connector.c1 { animation: fade-in 0.4s ease forwards 0.65s; }
+    .funnel-connector.c2 { animation: fade-in 0.4s ease forwards 0.9s; }
+
+    .callout {
+      background: rgba(56,189,248,0.06);
+      border: 1px solid rgba(56,189,248,0.18);
+      border-radius: 10px;
+      padding: 14px 23px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+      opacity: 0;
+      animation: fade-in 0.5s ease forwards 1.1s;
+    }
+    .callout strong { color: #38BDF8; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>
+      <div class="eyebrow">AI Economics</div>
+      <div class="bar-title">Token efficiency is <span class="hl">a core differentiator.</span></div>
+      <div class="bar-sub">You can't pass petabytes of raw logs to an LLM. The platform that compresses signal without losing meaning wins: on quality and cost.</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="funnel-row r1">
+      <div class="bar-wrap"><div class="bar"></div></div>
+      <div>
+        <div class="row-label">Raw Telemetry</div>
+        <div class="row-sub"><span class="accent">Logs</span>, metrics, traces — logs are the primary GTM signal</div>
+      </div>
+      <div class="row-meta">
+        <strong>Petabytes</strong>
+        Never passed to LLM directly. Stored at low cost, queried on demand via ES|QL.
+      </div>
+    </div>
+
+    <div class="funnel-connector c1">↓ KI Extractor distills signal</div>
+
+    <div class="funnel-row r2">
+      <div class="bar-wrap"><div class="bar"></div></div>
+      <div>
+        <div class="row-label">Knowledge Indicators</div>
+        <div class="row-sub">Entities, dependencies, state, context — structured system understanding</div>
+      </div>
+      <div class="row-meta">
+        <strong>Megabytes</strong>
+        The right context, structured. Agents reason over this layer for investigation.
+      </div>
+    </div>
+
+    <div class="funnel-connector c2">↓ Investigation correlates</div>
+
+    <div class="funnel-row r3">
+      <div class="bar-wrap"><div class="bar"></div></div>
+      <div>
+        <div class="row-label">Significant Events</div>
+        <div class="row-sub">Correlated situations with RCA, blast radius, severity — what actually matters</div>
+      </div>
+      <div class="row-meta">
+        <strong>Kilobytes</strong>
+        Precise context for action. This is what gets passed to the LLM and the human.
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>The hierarchy IS the token strategy.</strong> Each layer compresses meaning while discarding noise. Agents reason over Significant Events and KIs — not raw logs. This is what makes Elastic's AI economically viable at enterprise scale.
+    </div>
+
+  </div>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

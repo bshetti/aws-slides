@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A Lovable Kubernetes OOTB Experience</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1280px; height: 720px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; background: #fff; }
+    .slide { width: 1280px; height: 720px; display: flex; flex-direction: column; padding: 36px 54px 18px; }
+
+    .title { font-size: 54px; font-weight: 900; line-height: 1.05; letter-spacing: -0.025em; color: #0D0D0D; margin-bottom: 4px; white-space: nowrap; }
+    .title .blue { color: #1D55E0; }
+    .subtitle { font-size: 28px; font-weight: 600; color: #8A93A8; margin-bottom: 10px; }
+    .body { flex: 1; min-height: 0; display: flex; gap: 12px; }
+
+    /* ── Left card ── */
+    .left-card { width: 288px; flex-shrink: 0; background: #F2F5FB; border: 1px solid #DDE1EE; border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 0; }
+    .lc-head { font-size: 15px; font-weight: 700; color: #1D55E0; margin-bottom: 8px; }
+    .lc-stat { font-size: 14px; font-weight: 600; color: #0D0D0D; line-height: 1.35; margin-bottom: 6px; }
+    .lc-sub { font-size: 12.5px; color: #6A7390; line-height: 1.55; }
+    .lc-div { height: 1px; background: #DDE1EE; margin: 14px 0; }
+    .bullets { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-top: 2px; }
+    .bullets li { font-size: 13px; color: #3A4060; display: flex; align-items: center; gap: 8px; }
+    .bullets li::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #1D55E0; flex-shrink: 0; }
+
+    /* ── Kibana dashboard ── */
+    .kb { flex: 1; min-width: 0; background: #fff; border: 1px solid #DDE1EE; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+
+    .kb-topbar { height: 26px; background: #FAFBFF; border-bottom: 1px solid #ECEEF6; padding: 0 10px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+    .kb-tbtn { font-size: 8.5px; color: #6A7390; display: flex; align-items: center; gap: 3px; }
+    .kb-tsep { width: 1px; height: 11px; background: #DDE1EE; }
+
+    .kb-filterbar { height: 26px; border-bottom: 1px solid #ECEEF6; padding: 0 7px; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .kb-ficon { width: 18px; height: 18px; border: 1px solid #DDE1EE; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #6A7390; flex-shrink: 0; }
+    .kb-fbadge { width: 17px; height: 17px; border-radius: 50%; background: #1D55E0; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .kb-fsearch { flex: 1; height: 18px; background: #F2F5FB; border: 1px solid #DDE1EE; border-radius: 3px; padding: 0 6px; font-size: 8px; color: #9AA5B8; display: flex; align-items: center; gap: 4px; }
+    .kb-ftime { font-size: 8px; color: #3A4060; height: 18px; border: 1px solid #DDE1EE; border-radius: 3px 0 0 3px; padding: 0 5px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
+    .kb-farrow { width: 18px; height: 18px; border: 1px solid #DDE1EE; border-left: none; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #6A7390; flex-shrink: 0; }
+    .kb-farrow:last-of-type { border-radius: 0 3px 3px 0; }
+    .kb-frefresh { height: 18px; background: #1D55E0; color: #fff; border-radius: 3px; padding: 0 7px; display: flex; align-items: center; gap: 3px; font-size: 8px; font-weight: 600; flex-shrink: 0; margin-left: 3px; }
+
+    .kb-databar { height: 18px; border-bottom: 1px solid #ECEEF6; padding: 0 7px; display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+    .kb-dlbl { font-size: 7.5px; color: #6A7390; }
+    .kb-dtag { background: #ECEEF6; border-radius: 3px; padding: 1px 5px; font-size: 7.5px; color: #3A4060; }
+
+    .kb-tabs { height: 26px; border-bottom: 1px solid #DDE1EE; padding: 0 7px; display: flex; align-items: flex-end; flex-shrink: 0; }
+    .kb-tab { font-size: 9.5px; padding: 0 9px; height: 24px; display: flex; align-items: center; color: #6A7390; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+    .kb-tab.active { color: #1D55E0; border-bottom-color: #1D55E0; font-weight: 600; }
+
+    .kb-content { flex: 1; min-height: 0; overflow: hidden; padding: 7px 8px 4px; display: flex; flex-direction: column; }
+    .kb-sep { height: 1px; background: #ECEEF6; margin: 5px 0; flex-shrink: 0; }
+
+    /* Section */
+    .kb-sec-hdr { font-size: 10px; font-weight: 600; color: #1A1D27; margin-bottom: 5px; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .kb-caret { font-size: 9px; color: #9AA5B8; }
+    .kb-sec-body { display: flex; gap: 10px; flex: 1; min-height: 0; }
+
+    /* Stats col */
+    .kb-stats { width: 100px; flex-shrink: 0; display: flex; flex-direction: column; }
+    .kb-srow { display: flex; gap: 10px; margin-bottom: 7px; flex-shrink: 0; }
+    .kb-sitem { display: flex; flex-direction: column; }
+    .kb-snum { font-size: 20px; font-weight: 700; line-height: 1; color: #1A1D27; }
+    .kb-szero { font-size: 18px; font-weight: 300; line-height: 1; color: #1A1D27; }
+    .kb-slbl { font-size: 7.5px; color: #7A85A0; margin-top: 2px; }
+    .kb-bklbl { font-size: 7.5px; color: #556070; margin-bottom: 4px; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .ii { display: inline-flex; align-items: center; justify-content: center; width: 9px; height: 9px; border-radius: 50%; border: 1px solid #9AA5B8; font-size: 6px; color: #9AA5B8; }
+    .kb-donut { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+
+    /* Charts */
+    .kb-charts { flex: 1; min-width: 0; display: flex; gap: 7px; }
+    .kb-chart-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .kb-chtitle { font-size: 7.5px; font-weight: 500; color: #3A4060; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+    .kb-chwrap { flex: 1; min-height: 40px; position: relative; }
+    .kb-chwrap canvas { position: absolute; inset: 0; display: block; }
+
+    .kb-legend { flex-shrink: 0; margin-top: 4px; font-size: 7px; }
+    .kb-lhdr { display: flex; padding: 0 0 2px 10px; border-bottom: 1px solid #ECEEF5; color: #9AA5B8; }
+    .kb-lhdr .lh { width: 24px; text-align: right; font-weight: 500; }
+    .kb-lhdr .lh0 { flex: 1; }
+    .kb-lr { display: flex; align-items: center; padding: 2px 0; }
+    .kb-ldot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-right: 4px; }
+    .kb-lname { flex: 1; color: #4A5575; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .kb-lval { width: 24px; text-align: right; color: #1A1D27; font-weight: 500; }
+
+    /* ── Console ── */
+    .console { width: 230px; flex-shrink: 0; background: #0D1117; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+    .con-hdr { height: 26px; background: #161B22; border-bottom: 1px solid #30363D; padding: 0 10px; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .cdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .con-title { font-size: 8.5px; font-weight: 500; color: #8B949E; font-family: 'Menlo', 'Consolas', monospace; margin-left: 4px; }
+    .con-body { flex: 1; padding: 9px 11px; overflow: hidden; font-family: 'Menlo', 'Consolas', Courier, monospace; font-size: 9px; line-height: 1.55; color: #CDD6E0; display: flex; flex-direction: column; }
+    .cl { min-height: 1em; }
+    .cg { color: #3FB950; }
+    .cy { color: #E3B341; }
+    .cm { color: #8B949E; }
+    .cb { font-weight: 700; color: #F0F6FF; }
+    .cursor { display: inline-block; width: 6px; height: 11px; background: #3FB950; vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Footer ── */
+    .footer { display: flex; justify-content: flex-end; padding-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="title">A Lovable Kubernetes <span class="blue">OOTB</span> Experience</div>
+  <div class="subtitle">The most widely deployed cloud infrastructure</div>
+
+  <div class="body">
+
+    <!-- Left card -->
+    <div class="left-card">
+      <div class="lc-head">Why It Matters</div>
+      <div class="lc-stat">93% of companies using or evaluating Kubernetes</div>
+      <div class="lc-sub">Customers are eager for richer monitoring and observability experiences that just work.</div>
+      <div class="lc-div"></div>
+      <div class="lc-head">Enhanced OTel Experience</div>
+      <ul class="bullets">
+        <li>Revamped Dashboards &amp; Alerts</li>
+        <li>OOTB SLOs &amp; Agent Skills</li>
+        <li>Kubernetes Workflows</li>
+      </ul>
+    </div>
+
+    <!-- Kibana dashboard -->
+    <div class="kb">
+      <div class="kb-topbar">
+        <div class="kb-tbtn">↗ Share</div>
+        <div class="kb-tbtn">⤓ Export</div>
+        <div class="kb-tsep"></div>
+        <div class="kb-tbtn">✎ Edit</div>
+      </div>
+      <div class="kb-filterbar">
+        <div class="kb-ficon">⊞</div>
+        <div class="kb-ficon" style="font-size:6px">▼</div>
+        <div class="kb-fbadge">1</div>
+        <div class="kb-fsearch">🔍 Filter your data using KQL syntax</div>
+        <div class="kb-ftime">⏱ Last 15 minutes</div>
+        <div class="kb-farrow">‹</div>
+        <div class="kb-farrow">🔍</div>
+        <div class="kb-farrow" style="border-radius:0 3px 3px 0">›</div>
+        <div class="kb-frefresh">↺ Refresh</div>
+      </div>
+      <div class="kb-databar">
+        <span class="kb-dlbl">data_stream.dataset: is one of</span>
+        <span class="kb-dtag">k8sclusterreceiver.otel, kubeletstatereceiver.otel ×</span>
+      </div>
+      <div class="kb-tabs">
+        <div class="kb-tab active">Overview</div>
+        <div class="kb-tab">Clusters</div>
+        <div class="kb-tab">Nodes</div>
+        <div class="kb-tab">Namespaces</div>
+        <div class="kb-tab">Workload resources</div>
+        <div class="kb-tab">Pods</div>
+      </div>
+
+      <div class="kb-content">
+
+        <!-- Clusters -->
+        <div class="kb-sec-hdr"><span class="kb-caret">∨</span> Clusters</div>
+        <div class="kb-sec-body">
+          <div class="kb-stats">
+            <div class="kb-srow">
+              <div class="kb-sitem"><div class="kb-snum">5</div><div class="kb-slbl">Total clusters</div></div>
+              <div class="kb-sitem"><div class="kb-snum">5</div><div class="kb-slbl">Healthy</div></div>
+              <div class="kb-sitem"><div class="kb-szero">Ø</div><div class="kb-slbl">Unhealthy</div></div>
+            </div>
+            <div class="kb-bklbl">Clusters breakdown by health <span class="ii">i</span></div>
+            <div class="kb-donut">
+              <svg viewBox="0 0 90 90" width="90" height="90">
+                <circle cx="45" cy="45" r="33" fill="none" stroke="#E8EBF2" stroke-width="13"/>
+                <circle cx="45" cy="45" r="33" fill="none" stroke="#1DBBAA" stroke-width="13"
+                  stroke-dasharray="207.3 0" transform="rotate(-90 45 45)"/>
+                <text x="45" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="#1DBBAA" font-weight="600">Healthy 5</text>
+              </svg>
+            </div>
+          </div>
+          <div class="kb-charts">
+            <div class="kb-chart-col">
+              <div class="kb-chtitle">Top 10 clusters by CPU utilization <span style="color:#9AA5B8">ⓘ</span></div>
+              <div class="kb-chwrap"><canvas id="c-cpu"></canvas></div>
+              <div class="kb-legend">
+                <div class="kb-lhdr"><div class="lh0"></div><div class="lh">Avg</div><div class="lh">Min</div><div class="lh">Max</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#35C9C9"></div><div class="kb-lname">unknown_k8s_cluster</div><div class="kb-lval">62%</div><div class="kb-lval">54%</div><div class="kb-lval">101%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#6BA4F5"></div><div class="kb-lname">oteldemo-esyox</div><div class="kb-lval">22%</div><div class="kb-lval">6%</div><div class="kb-lval">52%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#E07A5F"></div><div class="kb-lname">jmiller-robot-shop</div><div class="kb-lval"></div><div class="kb-lval"></div><div class="kb-lval"></div></div>
+              </div>
+            </div>
+            <div class="kb-chart-col">
+              <div class="kb-chtitle">Top 10 clusters by memory working set utilization <span style="color:#9AA5B8">ⓘ</span></div>
+              <div class="kb-chwrap"><canvas id="c-mem"></canvas></div>
+              <div class="kb-legend">
+                <div class="kb-lhdr"><div class="lh0"></div><div class="lh">Avg</div><div class="lh">Min</div><div class="lh">Max</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#35C9C9"></div><div class="kb-lname">unknown_k8s_cluster</div><div class="kb-lval">62%</div><div class="kb-lval">60%</div><div class="kb-lval">71%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#6BA4F5"></div><div class="kb-lname">oteldemo-esyox</div><div class="kb-lval">43%</div><div class="kb-lval">31%</div><div class="kb-lval">57%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#E07A5F"></div><div class="kb-lname">jmiller-robot-shop</div><div class="kb-lval"></div><div class="kb-lval"></div><div class="kb-lval"></div></div>
+              </div>
+            </div>
+            <div class="kb-chart-col">
+              <div class="kb-chtitle">Top 10 clusters by disk usage <span style="color:#9AA5B8">ⓘ</span></div>
+              <div class="kb-chwrap"><canvas id="c-disk"></canvas></div>
+              <div class="kb-legend">
+                <div class="kb-lhdr"><div class="lh0"></div><div class="lh">Avg</div><div class="lh">Min</div><div class="lh">Max</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#A78BFA"></div><div class="kb-lname">unknown_k8s_cluster</div><div class="kb-lval">15%</div><div class="kb-lval">15%</div><div class="kb-lval">15%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#6BA4F5"></div><div class="kb-lname">oteldemo-esyox</div><div class="kb-lval">15%</div><div class="kb-lval">12%</div><div class="kb-lval">16%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#E07A5F"></div><div class="kb-lname">jmiller-robot-shop</div><div class="kb-lval">16%</div><div class="kb-lval">16%</div><div class="kb-lval">16%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kb-sep"></div>
+
+        <!-- Nodes -->
+        <div class="kb-sec-hdr"><span class="kb-caret">∨</span> Nodes</div>
+        <div class="kb-sec-body">
+          <div class="kb-stats">
+            <div class="kb-srow">
+              <div class="kb-sitem"><div class="kb-snum">29</div><div class="kb-slbl">Total nodes</div></div>
+              <div class="kb-sitem"><div class="kb-snum">29</div><div class="kb-slbl">Ready</div></div>
+              <div class="kb-sitem"><div class="kb-szero">Ø</div><div class="kb-slbl">Not ready</div></div>
+            </div>
+            <div class="kb-bklbl">Nodes breakdown by readiness <span class="ii">i</span></div>
+            <div class="kb-donut">
+              <svg viewBox="0 0 90 90" width="90" height="90">
+                <circle cx="45" cy="45" r="33" fill="none" stroke="#E8EBF2" stroke-width="13"/>
+                <circle cx="45" cy="45" r="33" fill="none" stroke="#1DBBAA" stroke-width="13"
+                  stroke-dasharray="207.3 0" transform="rotate(-90 45 45)"/>
+                <text x="45" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="#1DBBAA" font-weight="600">Ready 29</text>
+              </svg>
+            </div>
+          </div>
+          <div class="kb-charts">
+            <div class="kb-chart-col">
+              <div class="kb-chtitle">Top 10 nodes by CPU utilization <span style="color:#9AA5B8">ⓘ</span></div>
+              <div class="kb-chwrap"><canvas id="n-cpu"></canvas></div>
+              <div class="kb-legend">
+                <div class="kb-lhdr"><div class="lh0"></div><div class="lh">Avg</div><div class="lh">Min</div><div class="lh">Max</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#F5A623"></div><div class="kb-lname">gke-ensemble-ensemble-o...</div><div class="kb-lval">103%</div><div class="kb-lval">98%</div><div class="kb-lval">104%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#6BA4F5"></div><div class="kb-lname">gke-ensemble-ensemble-...</div><div class="kb-lval"></div><div class="kb-lval"></div><div class="kb-lval"></div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#E07A5F"></div><div class="kb-lname">gke-jmiller-bookinfo-def...</div><div class="kb-lval">5%</div><div class="kb-lval">4%</div><div class="kb-lval">6%</div></div>
+              </div>
+            </div>
+            <div class="kb-chart-col">
+              <div class="kb-chtitle">Top 10 nodes by memory working set utilization <span style="color:#9AA5B8">ⓘ</span></div>
+              <div class="kb-chwrap"><canvas id="n-mem"></canvas></div>
+              <div class="kb-legend">
+                <div class="kb-lhdr"><div class="lh0"></div><div class="lh">Avg</div><div class="lh">Min</div><div class="lh">Max</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#F5A623"></div><div class="kb-lname">gke-ensemble-ensemble-o...</div><div class="kb-lval">83%</div><div class="kb-lval">83%</div><div class="kb-lval">84%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#6BA4F5"></div><div class="kb-lname">gke-ensemble-ensemble-o...</div><div class="kb-lval"></div><div class="kb-lval"></div><div class="kb-lval"></div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#E07A5F"></div><div class="kb-lname">gke-jmiller-bookinfo-def...</div><div class="kb-lval">17%</div><div class="kb-lval">17%</div><div class="kb-lval">18%</div></div>
+              </div>
+            </div>
+            <div class="kb-chart-col">
+              <div class="kb-chtitle">Top 10 nodes by disk usage <span style="color:#9AA5B8">ⓘ</span></div>
+              <div class="kb-chwrap"><canvas id="n-disk"></canvas></div>
+              <div class="kb-legend">
+                <div class="kb-lhdr"><div class="lh0"></div><div class="lh">Avg</div><div class="lh">Min</div><div class="lh">Max</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#F5A623"></div><div class="kb-lname">gke-ensemble-ensemble-o...</div><div class="kb-lval">17%</div><div class="kb-lval">17%</div><div class="kb-lval">17%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#6BA4F5"></div><div class="kb-lname">gke-ensemble-ensemble-o...</div><div class="kb-lval">14%</div><div class="kb-lval">14%</div><div class="kb-lval">14%</div></div>
+                <div class="kb-lr"><div class="kb-ldot" style="background:#E07A5F"></div><div class="kb-lname">gke-jmiller-bookinfo-def...</div><div class="kb-lval">12%</div><div class="kb-lval">12%</div><div class="kb-lval">12%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Console -->
+    <div class="console">
+      <div class="con-hdr">
+        <div class="cdot" style="background:#FF5F57"></div>
+        <div class="cdot" style="background:#FEBC2E"></div>
+        <div class="cdot" style="background:#28C840"></div>
+        <div class="con-title">elastic-ai · root cause</div>
+      </div>
+      <div class="con-body" id="con-body">
+        <span class="cursor" id="cursor"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 687.5 235.6" style="height:22px;width:auto;display:block"><path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/><path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/><path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/><path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/><path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/><path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/><path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/><path fill="#1a1a1a" d="M330.8 165.5l4.7-.5.3 9.6a240.62 240.62 0 0 1-31.8 2.6q-17.55 0-24.9-10.2c-4.9-6.8-7.3-17.4-7.3-31.7q0-42.9 34.1-42.9c11 0 19.2 3.1 24.6 9.2s8.1 15.8 8.1 28.9l-.7 9.3h-53.8c0 9 1.6 15.7 4.9 20s8.9 6.5 17 6.5a230 230 0 0 0 24.8-.8zm-4.4-35.3c0-10-1.6-17.1-4.8-21.2s-8.4-6.2-15.6-6.2-12.7 2.2-16.3 6.5-5.5 11.3-5.6 20.9h42.3zm29.2 45.5v-117h12.2v117h-12.2zm89.3-56.9v40.1c0 4.1 10.1 4.9 10.1 4.9l-.6 10.8c-8.6 0-15.7.7-20-3.4a71.68 71.68 0 0 1-29.3 6.1c-7.5 0-13.2-2.1-17.1-6.4s-5.9-10.3-5.9-18.3 2-13.8 6-17.5 10.3-6.1 18.9-6.9l25.6-2.4v-7c0-5.5-1.2-9.5-3.6-11.9s-5.7-3.6-9.8-3.6h-32.1V92.5h31.3c9.2 0 15.9 2.1 20.1 6.4s6.4 10.9 6.4 19.9zM394.7 152c0 10 4.1 15 12.4 15a65.27 65.27 0 0 0 21.8-3.7l3.7-1.3v-26.9l-24.1 2.3c-4.9.4-8.4 1.8-10.6 4.2s-3.2 5.9-3.2 10.4zm97.9-48.6c-11.8 0-17.8 4.1-17.8 12.4 0 3.8 1.4 6.5 4.1 8.1s8.9 3.2 18.6 4.9 16.5 4 20.5 7.1 6 8.7 6 17.1-2.7 14.5-8.1 18.4-13.2 5.9-23.6 5.9c-6.7 0-29.2-2.5-29.2-2.5l.7-10.6c12.9 1.2 22.3 2.2 28.6 2.2s11.1-1 14.4-3 5-5.4 5-10.1-1.4-7.9-4.2-9.6-9-3.3-18.6-4.8-16.4-3.7-20.4-6.7-6-8.4-6-16.3 2.8-13.8 8.4-17.6 12.6-5.7 20.9-5.7c6.6 0 29.6 1.7 29.6 1.7V105c-12.1-.7-22-1.6-28.9-1.6zm90.4 1.4h-25.9v39c0 9.3.7 15.5 2 18.4s4.6 4.4 9.7 4.4l14.5-1 .8 10.1a111.1 111.1 0 0 1-16.6 1.8c-8.5 0-14.3-2.1-17.6-6.2s-4.9-12-4.9-23.6v-42.9h-11.6V94.2H545v-25h12.1v24.9H583v10.7zm17-29.1V61.6h12.2v14.2zm0 100V94.2h12.2v81.5H600zm65.2-83.2c3.6 0 9.7.7 18.3 2l3.9.5-.5 9.9a187.31 187.31 0 0 0-19.2-1.5c-9.2 0-15.5 2.2-18.8 6.6s-5 12.6-5 24.5 1.5 20.2 4.6 24.9 9.5 7 19.3 7l19.2-1.5.5 10.1c-10.1 1.5-17.7 2.3-22.7 2.3-12.7 0-21.5-3.3-26.3-9.8s-7.3-17.5-7.3-33 2.6-26.4 7.8-32.6 14-9.4 26.2-9.4z"/></svg>
+  </div>
+
+</div>
+<script>
+'use strict';
+const N = 52;
+function rng(seed) { let s = seed; return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; }; }
+
+const CFGS = {
+  'c-cpu':  { yMax:1.25, cols:['#35C9C9','#6BA4F5','#E07A5F'], base:[0.72,0.26,0.16], vol:[0.13,0.08,0.04], spiky:[true,true,false] },
+  'c-mem':  { yMax:0.88, cols:['#35C9C9','#6BA4F5','#E07A5F'], base:[0.63,0.44,0.26], vol:[0.03,0.04,0.02], spiky:[false,false,false] },
+  'c-disk': { yMax:0.22, cols:['#A78BFA','#6BA4F5','#E07A5F'], base:[0.152,0.148,0.160], vol:[0.003,0.005,0.002], spiky:[false,false,false] },
+  'n-cpu':  { yMax:1.25, cols:['#F5A623','#6BA4F5','#35C9C9','#E07A5F','#A78BFA'], base:[1.02,0.46,0.33,0.08,0.18], vol:[0.05,0.14,0.11,0.05,0.07], spiky:[false,true,true,true,true] },
+  'n-mem':  { yMax:1.00, cols:['#F5A623','#6BA4F5','#35C9C9','#E07A5F','#A78BFA'], base:[0.83,0.55,0.44,0.35,0.20], vol:[0.005,0.012,0.010,0.008,0.008], spiky:[false,false,false,false,false] },
+  'n-disk': { yMax:0.26, cols:['#F5A623','#6BA4F5','#35C9C9','#E07A5F','#A78BFA'], base:[0.170,0.156,0.150,0.142,0.130], vol:[0.002,0.002,0.002,0.002,0.002], spiky:[false,false,false,false,false] },
+};
+
+const DATA = {};
+Object.entries(CFGS).forEach(([id, cfg]) => {
+  const r = rng(id.charCodeAt(0) * 37 + id.charCodeAt(2));
+  DATA[id] = cfg.base.map((b, si) => {
+    let v = b; const pts = [];
+    for (let i = 0; i < N; i++) {
+      const d = cfg.spiky[si] && r() < 0.2
+        ? (r() - 0.3) * cfg.vol[si] * 7
+        : (r() - 0.5) * cfg.vol[si] * 2;
+      v = Math.max(0.005, Math.min(cfg.yMax * 0.98, v + d));
+      pts.push(v);
+    }
+    return pts;
+  });
+});
+
+function drawChart(id) {
+  const cfg = CFGS[id];
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (!W || !H) return;
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  const ctx = canvas.getContext('2d');
+  const P = { t: 2, r: 2, b: 13, l: 24 };
+  const cW = W - P.l - P.r, cH = H - P.t - P.b;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // grid + y labels
+  const steps = cfg.yMax <= 0.25 ? [0,.05,.10,.15,.20] : cfg.yMax <= 1.0 ? [0,.2,.4,.6,.8,1.0] : [0,.2,.4,.6,.8,1.0,1.2];
+  ctx.font = '6.5px Inter,sans-serif'; ctx.textAlign = 'right'; ctx.fillStyle = '#C0C8D8';
+  steps.forEach(v => {
+    if (v > cfg.yMax * 1.01) return;
+    const y = P.t + cH * (1 - v / cfg.yMax);
+    ctx.strokeStyle = '#ECEEF5'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l + cW, y); ctx.stroke();
+    ctx.fillStyle = '#C0C8D8';
+    ctx.fillText(Math.round(v * 100) + '%', P.l - 2, y + 2.5);
+  });
+
+  // x labels
+  const now = new Date();
+  ctx.textAlign = 'center'; ctx.font = '6.5px Inter,sans-serif'; ctx.fillStyle = '#C0C8D8';
+  [0, 0.5, 1].forEach(t => {
+    const d = new Date(now - (1 - t) * 15 * 60000);
+    ctx.fillText(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, P.l + cW * t, H - 1);
+  });
+
+  // lines
+  DATA[id].forEach((pts, si) => {
+    ctx.beginPath(); ctx.strokeStyle = cfg.cols[si]; ctx.lineWidth = 1.1; ctx.lineJoin = 'round';
+    pts.forEach((v, i) => {
+      const x = P.l + cW * i / (N - 1);
+      const y = P.t + cH * (1 - Math.min(v, cfg.yMax) / cfg.yMax);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+}
+
+let lastTick = 0;
+function frame(ts) {
+  if (ts - lastTick > 900) {
+    lastTick = ts;
+    Object.entries(CFGS).forEach(([id, cfg]) => {
+      const r = rng((ts * 31 + id.charCodeAt(0)) | 0);
+      DATA[id].forEach((pts, si) => {
+        const last = pts[pts.length - 1];
+        const d = cfg.spiky[si] && r() < 0.18
+          ? (r() - 0.3) * cfg.vol[si] * 6
+          : (r() - 0.5) * cfg.vol[si] * 2;
+        pts.push(Math.max(0.005, Math.min(cfg.yMax * 0.98, last + d)));
+        if (pts.length > N + 5) pts.shift();
+      });
+    });
+  }
+  Object.keys(CFGS).forEach(id => drawChart(id));
+  requestAnimationFrame(frame);
+}
+// Poll until flex layout has settled and canvas has real dimensions
+(function startWhenReady() {
+  const wrap = document.querySelector('.kb-chwrap');
+  if (wrap && wrap.clientWidth > 0 && wrap.clientHeight > 0) {
+    requestAnimationFrame(frame);
+  } else {
+    setTimeout(startWhenReady, 16);
+  }
+})();
+
+// Console
+const LINES = [
+  { t: '> Scanning cluster metrics...', c: 'cg', d: 600 },
+  { t: '', d: 350 },
+  { t: 'Root cause hypothesis', c: 'cb', d: 480 },
+  { t: '(confidence: high)', c: 'cy', d: 180 },
+  { t: '', d: 280 },
+  { t: 'checkout-service OOMKilling', d: 320 },
+  { t: 'under memory pressure from', d: 200 },
+  { t: 'upstream cart-service latency.', d: 200 },
+  { t: '', d: 260 },
+  { t: 'Evidence:', c: 'cy', d: 380 },
+  { t: '• exit code 137 (OOMKilled)', c: 'cm', d: 220 },
+  { t: '• memory at 98% of 512Mi', c: 'cm', d: 220 },
+  { t: '• cart-service errors: 14%', c: 'cm', d: 220 },
+  { t: '• p99 latency 7.6× elevated', c: 'cm', d: 220 },
+  { t: '• HPA scaled up under load', c: 'cm', d: 220 },
+  { t: '', d: 260 },
+  { t: 'Next steps:', c: 'cy', d: 380 },
+  { t: '1. Check cart-service logs', d: 220 },
+  { t: '2. Review CPU throttling', d: 220 },
+  { t: '3. Increase checkout memory', d: 220 },
+  { t: '', d: 300 },
+  { t: '> Analysis complete ✓', c: 'cg', d: 280 },
+];
+
+const body = document.getElementById('con-body');
+const cursor = document.getElementById('cursor');
+
+function runLines(lines, delay, cb) {
+  lines.forEach(line => {
+    delay += line.d;
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'cl' + (line.c ? ' ' + line.c : '');
+      el.textContent = line.t;
+      body.insertBefore(el, cursor);
+    }, delay);
+  });
+  const total = lines.reduce((s, l) => s + l.d, delay) + 3500;
+  setTimeout(cb, total);
+}
+
+function restart() {
+  while (body.firstChild !== cursor) body.removeChild(body.firstChild);
+  runLines(LINES, 500, restart);
+}
+runLines(LINES, 500, restart);
+</script>
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

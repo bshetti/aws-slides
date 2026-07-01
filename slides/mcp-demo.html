@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Elastic MCP App for Kubernetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #fff;
+      color: #0D0D0D; display: flex; flex-direction: column;
+    }
+
+    @keyframes fade-up  { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none} }
+    @keyframes fade-in  { from{opacity:0}to{opacity:1} }
+    @keyframes pulse    { 0%,100%{opacity:0.12}50%{opacity:0.25} }
+
+    /* ── Top bar ── */
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding: 14px 45px;
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow { font-size: 9px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:rgba(0,0,0,0.35); margin-bottom:3px; }
+    .bar-title { font-size: 28px; font-weight:800; letter-spacing:-0.03em; color:#0D0D0D; }
+    .bar-title em { font-style:normal; color:#1D55E0; }
+    .top-pills { display:flex; gap:8px; align-items:center; }
+    .tp { font-size:9px; font-weight:700; letter-spacing:0.04em; padding:0.28em 0.75em; border-radius:6px; border:1px solid var(--c); color:var(--c); background:var(--bg); }
+
+    /* ── Main ── */
+    .main { flex:1; min-height:0; display:flex; gap:32px; padding:16px 45px 14px; align-items:stretch; }
+
+    /* ── Footer ── */
+    .footer { flex-shrink:0; display:flex; justify-content:flex-end; align-items:center; padding:0 45px 14px; }
+
+    /* ── Left context ── */
+    .ctx {
+      flex-shrink:0; width:280px;
+      display:flex; flex-direction:column; justify-content:center;
+      gap:14px;
+      opacity:0; animation:fade-up 0.5s ease forwards 0.2s;
+    }
+    .ctx-desc { font-size:12px; color:rgba(0,0,0,0.5); line-height:1.6; font-weight:300; }
+    .ctx-desc strong { color:#0D0D0D; font-weight:700; }
+    .type-cards { display:flex; flex-direction:column; gap:6px; }
+    .type-card { display:flex; align-items:flex-start; gap:8px; padding:7px 10px; background:rgba(0,0,0,0.02); border:1px solid rgba(0,0,0,0.07); border-radius:10px; border-left:3px solid var(--tc); }
+    .tc-dot { width:7px; height:7px; border-radius:50%; background:var(--tc); flex-shrink:0; margin-top:4px; }
+    .tc-name { font-size:14px; font-weight:700; color:rgba(0,0,0,0.8); }
+    .tc-sub { font-size:11px; color:rgba(0,0,0,0.4); line-height:1.35; margin-top:2px; }
+    .ctx-hint { font-size:8px; color:rgba(0,0,0,0.3); font-style:italic; border-top:1px solid rgba(0,0,0,0.07); padding-top:8px; }
+    .ctx-hint span { color:#1D55E0; }
+
+    /* ── Frame wrap ── */
+    .frame-wrap {
+      flex:1; min-height:0; display:flex; flex-direction:column;
+      border-radius:12px; overflow:hidden;
+      box-shadow:0 0 0 1px rgba(0,0,0,0.1), 0 24px 60px rgba(0,0,0,0.2);
+      opacity:0; animation:fade-in 0.6s ease forwards 0.35s;
+    }
+
+    /* ── Claude Desktop window chrome ── */
+    .win-chrome {
+      flex-shrink:0; height:38px;
+      background:#27282B;
+      border-bottom:1px solid rgba(255,255,255,0.07);
+      display:flex; align-items:center;
+      padding:0 14px;
+      position:relative;
+    }
+    .traffic-lights { display:flex; gap:7px; }
+    .tl { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .win-center {
+      position:absolute; left:50%; transform:translateX(-50%);
+      display:flex; align-items:center; gap:7px;
+      pointer-events:none;
+    }
+    .claude-logo-mark {
+      width:18px; height:18px; border-radius:4px;
+      background:linear-gradient(135deg,#D97041 0%,#C85F2E 100%);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .win-app-name { font-size:12px; font-weight:600; color:rgba(255,255,255,0.75); letter-spacing:-0.01em; }
+    .win-right { margin-left:auto; font-size:10px; font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.22); }
+
+    /* ── Claude app body ── */
+    .claude-body { flex:1; min-height:0; display:flex; }
+
+    /* ── Chat sidebar ── */
+    .claude-sidebar {
+      flex-shrink:0; width:195px;
+      background:#1A1B1E;
+      border-right:1px solid rgba(255,255,255,0.07);
+      display:flex; flex-direction:column;
+    }
+    .sidebar-top {
+      flex-shrink:0; padding:9px 9px 8px;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      display:flex; align-items:center; gap:5px;
+    }
+    .conv-label { font-size:9.5px; font-weight:700; color:rgba(255,255,255,0.2); letter-spacing:0.08em; text-transform:uppercase; flex:1; }
+    .new-chat-btn { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:2px 7px; font-size:9px; color:rgba(255,255,255,0.35); font-family:inherit; }
+    .conv-thread { flex:1; min-height:0; overflow-y:auto; padding:8px 0 12px; scrollbar-width:none; }
+    .conv-thread::-webkit-scrollbar { display:none; }
+    .msg-u { display:flex; justify-content:flex-end; padding:2px 8px 1px; }
+    .msg-bubble { background:#2F3035; border-radius:11px 11px 3px 11px; padding:5px 8px; font-size:9.5px; max-width:92%; line-height:1.4; color:rgba(255,255,255,0.82); word-break:break-word; }
+    .msg-tool { padding:2px 7px 3px; }
+    .tool-block { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:5px; padding:4px 7px; font-size:8.5px; font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.38); display:flex; align-items:center; gap:5px; overflow:hidden; }
+    .tool-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tool-check { color:#48BB78; flex-shrink:0; }
+    .msg-ai { padding:2px 8px 5px; font-size:9.5px; color:rgba(255,255,255,0.42); line-height:1.5; }
+    .msg-sep { height:1px; background:rgba(255,255,255,0.06); margin:5px 8px; }
+
+    /* ── MCP UI shell ── */
+    .mcp-ui { background:#0F1520; color:#fff; flex:1; min-height:0; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+    .mcp-views { flex:1; min-height:0; position:relative; }
+    .mcp-view { position:absolute; inset:0; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity 0.3s ease; background:#0F1520; }
+    .mcp-view.active { opacity:1; pointer-events:auto; }
+
+    /* ── Shared MCP header ── */
+    .mcp-hdr {
+      flex-shrink:0; display:flex; align-items:center; gap:8px;
+      padding:7px 14px; border-bottom:1px solid rgba(255,255,255,0.08);
+      font-size:13px;
+    }
+    .mcp-hdr-title { font-weight:800; font-size:1.1em; flex:1; }
+    .mcp-pill { font-family:'JetBrains Mono',monospace; font-size:0.7em; border:1px solid rgba(255,255,255,0.18); border-radius:20px; padding:0.15em 0.55em; color:rgba(255,255,255,0.55); white-space:nowrap; }
+    .mcp-pill-amber { border-color:rgba(212,137,26,0.5); color:#D4891A; }
+    .back-btn { font-size:0.75em; color:rgba(255,255,255,0.3); padding:0.2em 0.5em; border-radius:4px; white-space:nowrap; font-family:inherit; background:none; border:1px solid rgba(255,255,255,0.1); }
+    .expand-btn { color:rgba(255,255,255,0.25); font-size:1em; }
+    .elastic-diamond { flex-shrink:0; }
+
+    /* ── Scrollable content ── */
+    .mcp-scroll { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.12) transparent; }
+    .mcp-scroll::-webkit-scrollbar { width:3px; }
+    .mcp-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:3px; }
+    .mcp-pad { padding:10px 14px; }
+
+    /* ── Scope / meta rows ── */
+    .scope-row { font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(255,255,255,0.4); margin-bottom:7px; }
+    .app-row { display:flex; align-items:center; gap:5px; font-size:9px; color:rgba(255,255,255,0.35); margin-bottom:7px; flex-wrap:wrap; }
+    .app-pill { border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:0.1em 0.45em; color:rgba(255,255,255,0.55); font-size:0.95em; }
+    .app-pill-amber { border-color:rgba(212,137,26,0.5); color:#D4891A; }
+    .app-pill-dim { font-style:italic; color:rgba(255,255,255,0.22); border:none; }
+    .tr-row { display:flex; align-items:center; gap:5px; font-size:9px; color:rgba(255,255,255,0.35); margin-bottom:8px; }
+    .tr-btn { border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:0.1em 0.5em; color:rgba(255,255,255,0.4); }
+    .tr-btn-active { background:#1E3A6A; border-color:#4A90D9; color:#7BB8F4; }
+
+    /* ── Section label ── */
+    .section-lbl { font-size:8px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.25); margin-bottom:5px; }
+
+    /* ── Metric cards grid ── */
+    .metrics-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:8px; border:1px solid rgba(255,255,255,0.06); border-radius:6px; overflow:hidden; }
+    .metric-card { padding:7px 9px; border-left:2.5px solid var(--mc); background:rgba(255,255,255,0.02); border-right:1px solid rgba(255,255,255,0.05); position:relative; }
+    .metric-card:last-child { border-right:none; }
+    .metric-lbl { font-size:8px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:2px; }
+    .metric-val { font-size:22px; font-weight:800; line-height:1.1; }
+    .metric-unit { font-size:0.55em; font-weight:400; color:rgba(255,255,255,0.5); margin-left:2px; }
+    .metric-sub { font-size:8px; color:rgba(255,255,255,0.3); margin-top:2px; }
+    .metric-badge { position:absolute; top:6px; right:7px; font-size:7px; font-weight:700; border-radius:4px; padding:0.1em 0.45em; }
+    .badge-ok { background:rgba(72,187,120,0.15); color:#48BB78; }
+    .badge-degraded { background:rgba(212,137,26,0.15); color:#D4891A; }
+    .badge-critical { background:rgba(224,82,82,0.15); color:#E05252; }
+    .chart-area { margin-top:4px; height:38px; }
+    .chart-area svg { width:100%; height:100%; }
+    .chart-times { display:flex; justify-content:space-between; font-size:7px; color:rgba(255,255,255,0.2); margin-top:1px; font-family:'JetBrains Mono',monospace; }
+
+    /* ── Tip bar ── */
+    .tip-bar { margin-top:8px; padding:6px 9px; background:rgba(212,137,26,0.07); border-left:3px solid #D4891A; font-size:9px; color:#D4891A; border-radius:0 4px 4px 0; }
+
+    /* ── Anomaly breakdown ── */
+    .anomaly-section { margin-top:9px; }
+    .anomaly-inner { border-radius:6px; padding:7px 9px; }
+    .anomaly-top { display:flex; gap:11px; align-items:center; margin-bottom:7px; }
+    .donut-legend { display:flex; flex-direction:column; gap:3px; justify-content:center; }
+    .dl-item { font-size:8px; display:flex; align-items:center; gap:5px; }
+    .dl-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+    .anomaly-timeline { flex:1; min-width:0; }
+    .tl-sublabel { font-size:7px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.22); margin-bottom:4px; }
+    .tl-row { display:flex; align-items:center; gap:0; margin-bottom:2px; }
+    .tl-name { width:90px; font-family:'JetBrains Mono',monospace; font-size:8px; color:rgba(255,255,255,0.45); flex-shrink:0; }
+    .tl-cells { display:flex; flex:1; gap:2px; }
+    .tl-cell { flex:1; height:12px; border-radius:2px; }
+    .tl-c0 { background:#1A2535; }
+    .tl-c1 { background:rgba(74,144,217,0.55); }
+    .tl-c2 { background:rgba(212,137,26,0.65); }
+    .tl-c3 { background:rgba(224,82,82,0.6); }
+    .tl-times { display:flex; justify-content:space-between; font-size:7px; color:rgba(255,255,255,0.2); margin-top:2px; font-family:'JetBrains Mono',monospace; padding-left:90px; }
+
+    /* ── View 2: Anomaly list ── */
+    .anom-banner { flex-shrink:0; padding:7px 14px; background:rgba(139,80,20,0.2); border-bottom:1px solid rgba(212,137,26,0.3); font-size:9px; color:#D4891A; font-family:'JetBrains Mono',monospace; }
+    .anom-summary { flex-shrink:0; display:flex; align-items:center; gap:14px; padding:8px 14px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .anom-summary-text { display:flex; flex-direction:column; gap:2px; font-size:9px; }
+    .anom-summary-item { display:flex; align-items:center; gap:5px; }
+    .asi-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .anom-controls { flex-shrink:0; display:flex; align-items:center; padding:4px 14px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:8px; color:rgba(255,255,255,0.3); gap:7px; }
+    .anom-controls-right { margin-left:auto; display:flex; gap:11px; font-family:'JetBrains Mono',monospace; }
+    .anom-row { display:flex; align-items:center; border-left:3px solid var(--sev-c); padding:7px 9px 7px 11px; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .anom-row:last-child { border-bottom:none; }
+    .anom-row-left { flex:1; min-width:0; }
+    .anom-svc { font-weight:700; font-size:11px; margin-bottom:3px; }
+    .anom-meta { display:flex; align-items:center; gap:5px; font-size:8px; color:rgba(255,255,255,0.35); }
+    .sev-badge { font-size:0.85em; font-weight:700; border-radius:3px; padding:0.1em 0.4em; display:flex; align-items:center; gap:4px; }
+    .sev-critical { background:rgba(224,82,82,0.15); color:#E05252; }
+    .sev-major    { background:rgba(212,137,26,0.15); color:#D4891A; }
+    .sev-minor    { background:rgba(74,144,217,0.15); color:#4A90D9; }
+    .anom-score { text-align:right; flex-shrink:0; margin-left:14px; }
+    .score-num { font-size:22px; font-weight:800; line-height:1; }
+    .score-lbl { font-size:7px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); }
+
+    /* ── View 3: Anomaly detail ── */
+    .detail-hero { flex-shrink:0; display:flex; gap:14px; align-items:flex-start; padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .detail-title-area { flex:1; min-width:0; }
+    .detail-headline { font-size:13px; font-weight:800; color:#fff; margin-bottom:3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .detail-sub { font-size:9px; color:rgba(255,255,255,0.35); margin-bottom:2px; }
+    .detail-mono { font-family:'JetBrains Mono',monospace; font-size:8px; color:rgba(255,255,255,0.3); }
+    .facts-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:4px 11px; padding:8px 14px; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+    .fact-lbl { font-size:7px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); margin-bottom:2px; }
+    .fact-val { font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#fff; }
+    .blast-btn { margin:9px 14px; display:inline-flex; align-items:center; gap:5px; background:rgba(224,82,82,0.12); border:1px solid rgba(224,82,82,0.35); color:#E05252; border-radius:6px; padding:5px 12px; font-size:10px; font-family:inherit; font-weight:600; }
+
+    /* ── View 4: Blast radius ── */
+    .blast-view-content { flex:1; min-height:0; position:relative; overflow:hidden; background:#0A1018; }
+    .blast-summary { position:absolute; top:10px; left:10px; z-index:10; background:rgba(10,16,24,0.92); border:1px solid rgba(255,255,255,0.1); border-radius:7px; padding:8px 12px; font-family:'JetBrains Mono',monospace; font-size:8px; line-height:1.85; }
+    .blast-summary .bs-lbl { font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:4px; font-size:0.85em; }
+    .blast-svg { position:absolute; inset:0; width:100%; height:100%; }
+    .blast-controls { position:absolute; bottom:8px; right:8px; display:flex; gap:3px; align-items:center; }
+    .zoom-btn { width:20px; height:20px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.4); font-family:inherit; }
+    .zoom-label { font-size:8px; color:rgba(255,255,255,0.25); font-family:'JetBrains Mono',monospace; margin-left:2px; }
+    .drag-hint { position:absolute; bottom:10px; left:10px; font-size:8px; color:rgba(255,255,255,0.2); font-family:'JetBrains Mono',monospace; }
+
+    /* Blast SVG node animations */
+    .sat-node { opacity:0; transition:opacity 0.4s ease; }
+    .sat-node.visible { opacity:1; }
+    .conn-line { opacity:0; transition:opacity 0.35s ease; }
+    .conn-line.visible { opacity:1; }
+    .green-arc { stroke-dasharray:600; stroke-dashoffset:600; transition:stroke-dashoffset 0.8s ease 0.6s; }
+    .green-arc.visible { stroke-dashoffset:0; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Top bar ── -->
+  <div class="top-bar">
+    <div>
+      <div class="eyebrow">Elastic for Claude · MCP Integration</div>
+      <div class="bar-title">Elastic <em>MCP</em> App for Kubernetes</div>
+    </div>
+    <div class="top-pills">
+      <span class="tp" style="--c:#D4891A;--bg:rgba(212,137,26,0.08)">● Health: Degraded</span>
+      <span class="tp" style="--c:#7BA8FF;--bg:rgba(123,168,255,0.08)">namespace: prod-us</span>
+      <span class="tp" style="--c:#E05252;--bg:rgba(224,82,82,0.08)">ML Anomalies: 12</span>
+    </div>
+  </div>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- Left context -->
+    <div class="ctx">
+      <div class="ctx-desc">
+        Elastic's <strong>MCP server</strong> brings full observability into Claude: health dashboards, ML anomaly detection, and blast radius analysis, all through <strong>natural language</strong>.
+      </div>
+      <div class="type-cards">
+        <div class="type-card" style="--tc:#00BFB3">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Health Summary</div><div class="tc-sub">Real-time system health across services and pods</div></div>
+        </div>
+        <div class="type-card" style="--tc:#D4891A">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Anomaly Explorer</div><div class="tc-sub">ML-powered deviation detection with risk scoring</div></div>
+        </div>
+        <div class="type-card" style="--tc:#E05252">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Blast Radius</div><div class="tc-sub">Impact analysis when a service or node goes down</div></div>
+        </div>
+      </div>
+      <div class="ctx-hint"><span>→ advance</span> through the demo flow</div>
+    </div>
+
+    <!-- Claude Desktop window -->
+    <div class="frame-wrap">
+
+      <!-- macOS title bar -->
+      <div class="win-chrome">
+        <div class="traffic-lights">
+          <div class="tl" style="background:#FF5F57"></div>
+          <div class="tl" style="background:#FFBD2E"></div>
+          <div class="tl" style="background:#28C940"></div>
+        </div>
+        <div class="win-center">
+          <div class="claude-logo-mark">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3L20.5 20H3.5L12 3Z" fill="rgba(255,255,255,0.9)"/>
+              <path d="M12 9L16.5 18H7.5L12 9Z" fill="rgba(209,112,65,1)"/>
+            </svg>
+          </div>
+          <span class="win-app-name">Claude</span>
+        </div>
+        <div class="win-right">claude-sonnet-4-5</div>
+      </div>
+
+      <!-- App body: chat sidebar + MCP panel -->
+      <div class="claude-body">
+
+        <!-- Left: conversation sidebar -->
+        <div class="claude-sidebar">
+          <div class="sidebar-top">
+            <span class="conv-label">Chat</span>
+            <button class="new-chat-btn">+ New</button>
+          </div>
+          <div class="conv-thread" id="conv-thread"></div>
+        </div>
+
+        <!-- Right: MCP tool output -->
+        <div class="mcp-ui">
+        <div class="mcp-views">
+
+          <!-- ════════════════ VIEW 1: Health Summary ════════════════ -->
+          <div class="mcp-view active" id="v-health">
+            <div class="mcp-hdr">
+              <svg class="elastic-diamond" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1L15 8L8 15L1 8Z" fill="none" stroke="#00BFB3" stroke-width="1.5"/>
+                <path d="M8 4L12 8L8 12L4 8Z" fill="#00BFB3" opacity="0.4"/>
+              </svg>
+              <span class="mcp-hdr-title">Health summary</span>
+              <span class="mcp-pill mcp-pill-amber">● degraded</span>
+              <span class="mcp-pill">namespace: prod-us</span>
+              <span class="mcp-pill">lookback: 1h</span>
+              <span class="expand-btn">⊡</span>
+            </div>
+            <div class="mcp-scroll">
+              <div class="mcp-pad">
+                <div class="scope-row">cluster: <strong>prod-us-east</strong> › namespace: <strong>prod-us</strong> › 10 services · 42 pods</div>
+                <div class="app-row">
+                  <span style="font-weight:700;color:rgba(255,255,255,0.3)">APPLICATIONS</span>
+                  <span style="color:rgba(255,255,255,0.2)">ⓘ · service.namespace</span>
+                  <span class="app-pill app-pill-amber">checkout 3 +2</span>
+                  <span class="app-pill">payments 4</span>
+                  <span class="app-pill">frontend 2</span>
+                  <span class="app-pill">infra 1</span>
+                  <span class="app-pill app-pill-dim">ungrouped</span>
+                </div>
+                <div class="tr-row">
+                  <span style="font-weight:700;color:rgba(255,255,255,0.3)">TIME RANGE</span>
+                  <span class="tr-btn">15m</span>
+                  <span class="tr-btn tr-btn-active">1h</span>
+                  <span class="tr-btn">6h</span>
+                  <span class="tr-btn">24h</span>
+                </div>
+                <div class="section-lbl">APM</div>
+                <div class="metrics-grid">
+                  <div class="metric-card" style="--mc:#4A90D9">
+                    <div class="metric-lbl">Throughput</div>
+                    <div class="metric-val">13.7K<span class="metric-unit">rpm</span></div>
+                    <div class="chart-area">
+                      <svg viewBox="0 0 240 50" preserveAspectRatio="none">
+                        <path d="M0,42 Q60,40 120,35 Q180,28 240,22" fill="none" stroke="#4A90D9" stroke-width="1.5" opacity="0.8"/>
+                        <path d="M0,42 Q60,40 120,35 Q180,28 240,22 L240,50 L0,50Z" fill="url(#grad-blue)" opacity="0.12"/>
+                        <defs><linearGradient id="grad-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4A90D9"/><stop offset="100%" stop-color="#4A90D9" stop-opacity="0"/></linearGradient></defs>
+                      </svg>
+                    </div>
+                    <div class="chart-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                  </div>
+                  <div class="metric-card" style="--mc:#D4891A">
+                    <div class="metric-lbl">P99 Latency</div>
+                    <div class="metric-val">612<span class="metric-unit">ms</span></div>
+                    <span class="metric-badge badge-degraded">degraded</span>
+                    <div class="chart-area">
+                      <svg viewBox="0 0 240 50" preserveAspectRatio="none">
+                        <path d="M0,45 Q80,40 140,32 Q200,22 240,14" fill="none" stroke="#D4891A" stroke-width="1.5" opacity="0.8"/>
+                        <path d="M0,45 Q80,40 140,32 Q200,22 240,14 L240,50 L0,50Z" fill="url(#grad-amber)" opacity="0.12"/>
+                        <defs><linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4891A"/><stop offset="100%" stop-color="#D4891A" stop-opacity="0"/></linearGradient></defs>
+                      </svg>
+                    </div>
+                    <div class="chart-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                  </div>
+                  <div class="metric-card" style="--mc:#4A90D9">
+                    <div class="metric-lbl">Error Rate</div>
+                    <div class="metric-val">0.61<span class="metric-unit">%</span></div>
+                    <span class="metric-badge badge-ok">ok</span>
+                    <div class="chart-area">
+                      <svg viewBox="0 0 240 50" preserveAspectRatio="none">
+                        <path d="M0,38 Q120,40 200,38 Q220,37 240,36" fill="none" stroke="#4A90D9" stroke-width="1.5" opacity="0.6"/>
+                      </svg>
+                    </div>
+                    <div class="chart-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                  </div>
+                  <div class="metric-card" style="--mc:#E05252;border-right:none">
+                    <div class="metric-lbl">Services</div>
+                    <div class="metric-val">18</div>
+                    <span class="metric-badge badge-critical">critical</span>
+                    <div class="metric-sub" style="margin-top:11px">3 degraded</div>
+                  </div>
+                </div>
+                <div class="section-lbl">Kubernetes</div>
+                <div class="metrics-grid">
+                  <div class="metric-card" style="--mc:#4A90D9">
+                    <div class="metric-lbl">CPU</div>
+                    <div class="metric-val">62<span class="metric-unit">%</span></div>
+                    <span class="metric-badge badge-ok">ok</span>
+                    <div class="chart-area">
+                      <svg viewBox="0 0 240 50" preserveAspectRatio="none">
+                        <path d="M0,40 Q80,38 140,35 Q200,32 240,28" fill="none" stroke="#4A90D9" stroke-width="1.5" opacity="0.6"/>
+                      </svg>
+                    </div>
+                    <div class="chart-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                  </div>
+                  <div class="metric-card" style="--mc:#D4891A">
+                    <div class="metric-lbl">Memory</div>
+                    <div class="metric-val">84<span class="metric-unit">%</span></div>
+                    <span class="metric-badge badge-degraded">degraded</span>
+                    <div class="chart-area">
+                      <svg viewBox="0 0 240 50" preserveAspectRatio="none">
+                        <path d="M0,45 Q80,42 140,34 Q200,24 240,16" fill="none" stroke="#D4891A" stroke-width="1.5" opacity="0.8"/>
+                      </svg>
+                    </div>
+                    <div class="chart-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                  </div>
+                  <div class="metric-card" style="--mc:#D4891A">
+                    <div class="metric-lbl">Restarts</div>
+                    <div class="metric-val">3</div>
+                    <span class="metric-badge badge-degraded">degraded</span>
+                    <div class="chart-area">
+                      <svg viewBox="0 0 240 50" preserveAspectRatio="none">
+                        <rect x="70" y="25" width="22" height="18" fill="#D4891A" opacity="0.75" rx="1"/>
+                        <rect x="130" y="20" width="22" height="23" fill="#D4891A" opacity="0.75" rx="1"/>
+                        <rect x="190" y="15" width="22" height="28" fill="#D4891A" opacity="0.75" rx="1"/>
+                      </svg>
+                    </div>
+                    <div class="chart-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                    <div class="metric-sub">last 1h</div>
+                  </div>
+                  <div class="metric-card" style="--mc:#4A90D9;border-right:none">
+                    <div class="metric-lbl">Nodes</div>
+                    <div class="metric-val">5</div>
+                    <span class="metric-badge badge-ok">ok</span>
+                    <div class="metric-sub" style="margin-top:11px">all ready</div>
+                  </div>
+                </div>
+                <div class="tip-bar">💡 Investigate checkout: p99 latency and error rate both breached baseline in the last 15 minutes.</div>
+                <div class="anomaly-section">
+                  <div class="section-lbl" style="margin-top:9px">Anomaly breakdown</div>
+                  <div class="anomaly-inner">
+                    <div class="anomaly-top">
+                      <svg width="60" height="60" viewBox="0 0 70 70">
+                        <circle cx="35" cy="35" r="28" fill="none" stroke="#1E2A3A" stroke-width="8"/>
+                        <circle cx="35" cy="35" r="28" fill="none" stroke="#4A90D9" stroke-width="8" stroke-dasharray="80 96" transform="rotate(-90 35 35)"/>
+                        <circle cx="35" cy="35" r="28" fill="none" stroke="#D4891A" stroke-width="8" stroke-dasharray="64 112" stroke-dashoffset="-80" transform="rotate(-90 35 35)"/>
+                        <circle cx="35" cy="35" r="28" fill="none" stroke="#E05252" stroke-width="8" stroke-dasharray="32 144" stroke-dashoffset="-144" transform="rotate(-90 35 35)"/>
+                        <text x="35" y="33" text-anchor="middle" font-size="14" font-weight="800" fill="#fff" font-family="Inter,sans-serif">11</text>
+                        <text x="35" y="43" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.3)" font-family="Inter,sans-serif">total</text>
+                      </svg>
+                      <div class="donut-legend">
+                        <div class="dl-item"><span class="dl-dot" style="background:#E05252"></span><span>critical 2</span></div>
+                        <div class="dl-item"><span class="dl-dot" style="background:#D4891A"></span><span>major 4</span></div>
+                        <div class="dl-item"><span class="dl-dot" style="background:#4A90D9"></span><span>minor 5</span></div>
+                      </div>
+                      <div class="anomaly-timeline">
+                        <div class="tl-sublabel">Top Entities · Last 60m</div>
+                        <div id="timeline-rows"></div>
+                        <div class="tl-times"><span>06:20 AM</span><span>07:20 AM</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- v-health -->
+
+
+          <!-- ════════════════ VIEW 2: Anomaly List ════════════════ -->
+          <div class="mcp-view" id="v-anomaly-list">
+            <div class="mcp-hdr">
+              <svg class="elastic-diamond" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1L15 8L8 15L1 8Z" fill="none" stroke="#00BFB3" stroke-width="1.5"/>
+                <path d="M8 4L12 8L8 12L4 8Z" fill="#00BFB3" opacity="0.4"/>
+              </svg>
+              <span class="mcp-hdr-title">Anomaly Explainer</span>
+              <button class="back-btn">← Health</button>
+              <span class="expand-btn">⊡</span>
+            </div>
+            <div class="anom-banner">12 anomalies across 4 services in prod-us over the last hour</div>
+            <div class="anom-summary">
+              <svg width="58" height="58" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="23" fill="none" stroke="#1E2A3A" stroke-width="7"/>
+                <circle cx="30" cy="30" r="23" fill="none" stroke="#4A90D9" stroke-width="7" stroke-dasharray="72 73" transform="rotate(-90 30 30)"/>
+                <circle cx="30" cy="30" r="23" fill="none" stroke="#D4891A" stroke-width="7" stroke-dasharray="48 97" stroke-dashoffset="-72" transform="rotate(-90 30 30)"/>
+                <circle cx="30" cy="30" r="23" fill="none" stroke="#E05252" stroke-width="7" stroke-dasharray="24 121" stroke-dashoffset="-120" transform="rotate(-90 30 30)"/>
+                <text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#fff" font-family="Inter,sans-serif">6</text>
+              </svg>
+              <div class="anom-summary-text">
+                <div class="anom-summary-item"><span class="asi-dot" style="background:#E05252"></span><span style="color:#E05252">1 critical</span></div>
+                <div class="anom-summary-item"><span class="asi-dot" style="background:#D4891A"></span><span style="color:#D4891A">2 major</span></div>
+                <div class="anom-summary-item"><span class="asi-dot" style="background:#4A90D9"></span><span style="color:#4A90D9">3 minor</span></div>
+                <div class="anom-summary-item" style="color:rgba(255,255,255,0.3);font-size:8px">6 total · 1h</div>
+              </div>
+            </div>
+            <div class="anom-controls">
+              <span>Showing <strong style="color:rgba(255,255,255,0.6)">6</strong> anomalies</span>
+              <div class="anom-controls-right">
+                <span>Sort by: <strong>Risk score</strong> ∨</span>
+                <span>Group by: <strong>None</strong> ∨</span>
+              </div>
+            </div>
+            <div class="mcp-scroll">
+              <div class="anom-row" style="--sev-c:#E05252">
+                <div class="anom-row-left">
+                  <div class="anom-svc">checkout</div>
+                  <div class="anom-meta"><span class="sev-badge sev-critical">● critical</span><span>apm-p99-latency · 4/23/2026</span></div>
+                </div>
+                <div class="anom-score"><div class="score-num">93</div><div class="score-lbl">SCORE</div></div>
+              </div>
+              <div class="anom-row" style="--sev-c:#D4891A">
+                <div class="anom-row-left">
+                  <div class="anom-svc">shipping</div>
+                  <div class="anom-meta"><span class="sev-badge sev-major">● major</span><span>apm-p99-latency · 4/23/2026</span></div>
+                </div>
+                <div class="anom-score"><div class="score-num">78</div><div class="score-lbl">SCORE</div></div>
+              </div>
+              <div class="anom-row" style="--sev-c:#D4891A">
+                <div class="anom-row-left">
+                  <div class="anom-svc">payments</div>
+                  <div class="anom-meta"><span class="sev-badge sev-major">● major</span><span>apm-error-rate · 4/23/2026</span></div>
+                </div>
+                <div class="anom-score"><div class="score-num">64</div><div class="score-lbl">SCORE</div></div>
+              </div>
+              <div class="anom-row" style="--sev-c:#4A90D9">
+                <div class="anom-row-left">
+                  <div class="anom-svc">checkout</div>
+                  <div class="anom-meta"><span class="sev-badge sev-minor">● minor</span><span>apm-error-rate · 4/23/2026</span></div>
+                </div>
+                <div class="anom-score"><div class="score-num">55</div><div class="score-lbl">SCORE</div></div>
+              </div>
+              <div class="anom-row" style="--sev-c:#4A90D9">
+                <div class="anom-row-left">
+                  <div class="anom-svc">node-us-east-4</div>
+                  <div class="anom-meta"><span class="sev-badge sev-minor">● minor</span><span>k8s-memory-utilization · 4/23/2026</span></div>
+                </div>
+                <div class="anom-score"><div class="score-num">48</div><div class="score-lbl">SCORE</div></div>
+              </div>
+            </div>
+          </div><!-- v-anomaly-list -->
+
+
+          <!-- ════════════════ VIEW 3: Anomaly Detail ════════════════ -->
+          <div class="mcp-view" id="v-anomaly-detail">
+            <div class="mcp-hdr">
+              <svg class="elastic-diamond" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1L15 8L8 15L1 8Z" fill="none" stroke="#00BFB3" stroke-width="1.5"/>
+                <path d="M8 4L12 8L8 12L4 8Z" fill="#00BFB3" opacity="0.4"/>
+              </svg>
+              <span class="mcp-hdr-title">Anomaly Explainer</span>
+              <span class="mcp-pill">job: apm-p99-latency</span>
+              <span class="mcp-pill">entity: service.name=checkout</span>
+              <span class="mcp-pill">lookback: 1h</span>
+              <button class="back-btn">← Anomalies</button>
+              <span class="expand-btn">⊡</span>
+            </div>
+            <div class="mcp-scroll">
+              <div class="detail-hero">
+                <svg width="80" height="80" viewBox="0 0 90 90">
+                  <circle cx="45" cy="45" r="38" fill="none" stroke="#1E2A3A" stroke-width="6"/>
+                  <circle cx="45" cy="45" r="38" fill="none" stroke="#D4891A" stroke-width="6" stroke-dasharray="222 17" transform="rotate(-90 45 45)"/>
+                  <text x="45" y="43" text-anchor="middle" font-size="20" font-weight="800" fill="#fff" font-family="Inter,sans-serif">93</text>
+                  <text x="45" y="55" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.3)" font-family="Inter,sans-serif">/ 100</text>
+                </svg>
+                <div class="detail-title-area">
+                  <div class="detail-headline">
+                    <span class="sev-badge sev-critical">● critical</span>
+                    checkout · p99 latency spiked 2.8× typical
+                  </div>
+                  <div class="detail-sub">4/23/2026 · 2.8× typical · namespace prod-us</div>
+                  <div class="detail-mono">high_mean(transaction.duration.us)</div>
+                </div>
+              </div>
+              <div class="facts-grid">
+                <div class="fact"><div class="fact-lbl">Function</div><div class="fact-val">high_mean</div></div>
+                <div class="fact"><div class="fact-lbl">Field</div><div class="fact-val" style="font-size:9px">transaction.duration.us</div></div>
+                <div class="fact"><div class="fact-lbl">Entity</div><div class="fact-val">checkout</div></div>
+                <div class="fact"><div class="fact-lbl">Current P99</div><div class="fact-val">520 ms</div></div>
+                <div class="fact"><div class="fact-lbl">Typical</div><div class="fact-val">185 ms</div></div>
+                <div class="fact"><div class="fact-lbl">Deviation</div><div class="fact-val" style="color:#E05252">+181.0%</div></div>
+                <div class="fact"><div class="fact-lbl">Detected</div><div class="fact-val">4/23/2026</div></div>
+                <div class="fact"><div class="fact-lbl">Host.Name</div><div class="fact-val">node-us-east-4</div></div>
+                <div class="fact"><div class="fact-lbl">Environment</div><div class="fact-val">production</div></div>
+                <div class="fact"></div>
+              </div>
+              <div style="padding:8px 14px 5px">
+                <div class="section-lbl">P99 Latency · Last 30m</div>
+                <svg viewBox="0 0 600 180" width="100%" height="141" style="overflow:visible">
+                  <defs>
+                    <linearGradient id="grad-line" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#D4891A" stop-opacity="0.35"/>
+                      <stop offset="100%" stop-color="#D4891A" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <line x1="50" y1="20"  x2="590" y2="20"  stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                  <line x1="50" y1="73"  x2="590" y2="73"  stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                  <line x1="50" y1="126" x2="590" y2="126" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                  <line x1="50" y1="170" x2="590" y2="170" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                  <text x="44" y="23"  text-anchor="end" font-size="9" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono,monospace">567 ms</text>
+                  <text x="44" y="76"  text-anchor="end" font-size="9" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono,monospace">378 ms</text>
+                  <text x="44" y="129" text-anchor="end" font-size="9" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono,monospace">189 ms</text>
+                  <text x="44" y="170" text-anchor="end" font-size="9" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono,monospace">1.00 ms</text>
+                  <line x1="50" y1="126" x2="590" y2="126" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="4 3"/>
+                  <path d="M50,126 L140,124 L200,122 L250,124 L300,125 L340,123 L380,125 L430,124 L460,122 L480,120 L490,105 L500,60 L510,22 L520,28 L540,38 L555,45 L570,50 L585,52 L590,53 L590,170 L50,170Z" fill="url(#grad-line)"/>
+                  <path d="M50,126 L140,124 L200,122 L250,124 L300,125 L340,123 L380,125 L430,124 L460,122 L480,120 L490,105 L500,60 L510,22 L520,28 L540,38 L555,45 L570,50 L585,52 L590,53" fill="none" stroke="#D4891A" stroke-width="2"/>
+                  <circle cx="50"  cy="126" r="3" fill="#D4891A"/>
+                  <circle cx="200" cy="122" r="3" fill="#D4891A"/>
+                  <circle cx="300" cy="125" r="3" fill="#D4891A"/>
+                  <circle cx="460" cy="122" r="3" fill="#D4891A"/>
+                  <circle cx="510" cy="22"  r="4" fill="#D4891A"/>
+                  <circle cx="540" cy="38"  r="3" fill="#D4891A"/>
+                  <circle cx="570" cy="50"  r="3" fill="#D4891A"/>
+                  <circle cx="590" cy="53"  r="3" fill="#D4891A"/>
+                  <text x="50"  y="178" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono,monospace">06:50 AM</text>
+                  <text x="590" y="178" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono,monospace">07:19 AM</text>
+                </svg>
+              </div>
+              <button class="blast-btn">→ View Blast Radius</button>
+            </div>
+          </div><!-- v-anomaly-detail -->
+
+
+          <!-- ════════════════ VIEW 4: Blast Radius ════════════════ -->
+          <div class="mcp-view" id="v-blast-radius">
+            <div class="mcp-hdr">
+              <svg class="elastic-diamond" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1L15 8L8 15L1 8Z" fill="none" stroke="#00BFB3" stroke-width="1.5"/>
+                <path d="M8 4L12 8L8 12L4 8Z" fill="#00BFB3" opacity="0.4"/>
+              </svg>
+              <span class="mcp-hdr-title">Blast radius</span>
+              <span class="mcp-pill">node: ip-10-0-12-84.us-east-2.compute.internal</span>
+              <span class="mcp-pill mcp-pill-amber">● at risk</span>
+              <button class="back-btn">← Anomaly</button>
+              <span class="expand-btn">⊡</span>
+            </div>
+            <div class="blast-view-content" id="blast-content">
+              <div class="blast-summary">
+                <div class="bs-lbl">Blast Radius Summary</div>
+                <div><span style="color:#E05252;font-weight:700">2</span> &nbsp;deployments: <span style="color:#E05252">full outage</span></div>
+                <div><span style="color:#D4891A;font-weight:700">4</span> &nbsp;deployments: <span style="color:#D4891A">degraded</span></div>
+                <div><span style="color:#48BB78;font-weight:700">31</span> deployments: <span style="color:#48BB78">unaffected</span></div>
+                <div style="margin-top:4px"><span style="color:#fff;font-weight:700">14</span> pods at risk</div>
+                <div><span style="color:#fff;font-weight:700">4</span> &nbsp;downstream services: <span style="color:#00BFB3">user-facing</span></div>
+                <div>rescheduling: <span style="color:#E05252;font-weight:700">infeasible</span></div>
+              </div>
+              <svg class="blast-svg" id="blast-svg" viewBox="0 0 700 480" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <radialGradient id="grad-center" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#FF6B6B"/>
+                    <stop offset="100%" stop-color="#C53030"/>
+                  </radialGradient>
+                  <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="6" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                  <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <circle cx="310" cy="245" r="72" fill="#C53030" opacity="0.1" style="animation:pulse 2s infinite"/>
+                <circle cx="310" cy="245" r="60" fill="#C53030" opacity="0.18" style="animation:pulse 2s infinite 0.7s"/>
+                <circle cx="310" cy="245" r="46" fill="url(#grad-center)" stroke="#FF8080" stroke-width="2" filter="url(#glow-red)"/>
+                <text x="310" y="237" text-anchor="middle" font-size="8.5" fill="white" font-family="JetBrains Mono,monospace">ip-10…ernal</text>
+                <text x="310" y="249" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.5)" font-family="Inter,sans-serif">node</text>
+                <text x="310" y="262" text-anchor="middle" font-size="9" font-weight="800" fill="white" letter-spacing="1" font-family="Inter,sans-serif">AT RISK</text>
+                <line class="conn-line" id="cl-frontend"  x1="310" y1="245" x2="205" y2="108" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line class="conn-line" id="cl-payments"  x1="310" y1="245" x2="415" y2="108" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line class="conn-line" id="cl-redis"     x1="310" y1="245" x2="92"  y2="245" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line class="conn-line" id="cl-inventory" x1="310" y1="245" x2="462" y2="245" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line class="conn-line" id="cl-checkout"  x1="310" y1="245" x2="162" y2="390" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line class="conn-line" id="cl-shipping"  x1="310" y1="245" x2="420" y2="390" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+                <g class="sat-node" id="sn-frontend">
+                  <circle cx="205" cy="108" r="28" fill="rgba(212,137,26,0.12)" stroke="#D4891A" stroke-width="1.5" filter="url(#glow-amber)"/>
+                  <text x="205" y="105" text-anchor="middle" font-size="8" fill="white" font-family="Inter,sans-serif">frontend</text>
+                  <text x="205" y="117" text-anchor="middle" font-size="7" fill="#D4891A" font-family="Inter,sans-serif">degraded</text>
+                </g>
+                <g class="sat-node" id="sn-payments">
+                  <circle cx="415" cy="108" r="28" fill="rgba(212,137,26,0.12)" stroke="#D4891A" stroke-width="1.5" filter="url(#glow-amber)"/>
+                  <text x="415" y="105" text-anchor="middle" font-size="8" fill="white" font-family="Inter,sans-serif">payments</text>
+                  <text x="415" y="117" text-anchor="middle" font-size="7" fill="#D4891A" font-family="Inter,sans-serif">degraded</text>
+                </g>
+                <g class="sat-node" id="sn-redis">
+                  <circle cx="92" cy="245" r="28" fill="rgba(224,82,82,0.12)" stroke="#E05252" stroke-width="1.5" filter="url(#glow-red)"/>
+                  <text x="92" y="242" text-anchor="middle" font-size="8" fill="white" font-family="Inter,sans-serif">redis-cache</text>
+                  <text x="92" y="254" text-anchor="middle" font-size="7" fill="#E05252" font-family="Inter,sans-serif">full outage</text>
+                </g>
+                <g class="sat-node" id="sn-inventory">
+                  <circle cx="462" cy="245" r="28" fill="rgba(212,137,26,0.12)" stroke="#D4891A" stroke-width="1.5" filter="url(#glow-amber)"/>
+                  <text x="462" y="242" text-anchor="middle" font-size="8" fill="white" font-family="Inter,sans-serif">inventory</text>
+                  <text x="462" y="254" text-anchor="middle" font-size="7" fill="#D4891A" font-family="Inter,sans-serif">degraded</text>
+                </g>
+                <g class="sat-node" id="sn-checkout">
+                  <circle cx="162" cy="390" r="28" fill="rgba(224,82,82,0.12)" stroke="#E05252" stroke-width="1.5" filter="url(#glow-red)"/>
+                  <text x="162" y="387" text-anchor="middle" font-size="8" fill="white" font-family="Inter,sans-serif">checkout-api</text>
+                  <text x="162" y="399" text-anchor="middle" font-size="7" fill="#E05252" font-family="Inter,sans-serif">full outage</text>
+                </g>
+                <g class="sat-node" id="sn-shipping">
+                  <circle cx="420" cy="390" r="28" fill="rgba(212,137,26,0.12)" stroke="#D4891A" stroke-width="1.5" filter="url(#glow-amber)"/>
+                  <text x="420" y="387" text-anchor="middle" font-size="8" fill="white" font-family="Inter,sans-serif">shipping</text>
+                  <text x="420" y="399" text-anchor="middle" font-size="7" fill="#D4891A" font-family="Inter,sans-serif">degraded</text>
+                </g>
+                <path class="green-arc" id="green-arc" d="M575,55 Q650,245 575,440" fill="none" stroke="#48BB78" stroke-width="2.5"/>
+                <g id="safe-group" opacity="0">
+                  <text x="596" y="95"  font-size="8.5" fill="rgba(255,255,255,0.3)" font-family="Inter,sans-serif">safe</text>
+                  <text x="596" y="107" font-size="7.5" fill="#48BB78" font-family="Inter,sans-serif">31 unaffected</text>
+                  <circle cx="592" cy="130" r="4" fill="#4A90D9" opacity="0.7"/>
+                  <text x="600" y="133" font-size="7.5" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">checkout</text>
+                  <circle cx="592" cy="155" r="4" fill="#4A90D9" opacity="0.7"/>
+                  <text x="600" y="158" font-size="7.5" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">frontend</text>
+                  <circle cx="592" cy="180" r="4" fill="#4A90D9" opacity="0.7"/>
+                  <text x="600" y="183" font-size="7.5" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">payments</text>
+                  <circle cx="592" cy="205" r="4" fill="#4A90D9" opacity="0.7"/>
+                  <text x="600" y="208" font-size="7.5" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">shipping</text>
+                </g>
+              </svg>
+              <div class="drag-hint">blast radius visualization</div>
+              <div class="blast-controls">
+                <button class="zoom-btn">+</button>
+                <button class="zoom-btn">−</button>
+                <button class="zoom-btn" style="font-size:9px">↺</button>
+                <span class="zoom-label">1.0×</span>
+              </div>
+            </div>
+          </div><!-- v-blast-radius -->
+
+        </div><!-- mcp-views -->
+        </div><!-- mcp-ui -->
+      </div><!-- claude-body -->
+    </div><!-- frame-wrap -->
+
+  </div><!-- main -->
+
+  <div class="footer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 687.5 235.6" style="height:26px;width:auto;display:block"><title>elastic</title><path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/><path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/><path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/><path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/><path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/><path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/><path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/><path fill="#1a1a1a" d="M330.8 165.5l4.7-.5.3 9.6a240.62 240.62 0 0 1-31.8 2.6q-17.55 0-24.9-10.2c-4.9-6.8-7.3-17.4-7.3-31.7q0-42.9 34.1-42.9c11 0 19.2 3.1 24.6 9.2s8.1 15.8 8.1 28.9l-.7 9.3h-53.8c0 9 1.6 15.7 4.9 20s8.9 6.5 17 6.5a230 230 0 0 0 24.8-.8zm-4.4-35.3c0-10-1.6-17.1-4.8-21.2s-8.4-6.2-15.6-6.2-12.7 2.2-16.3 6.5-5.5 11.3-5.6 20.9h42.3zm29.2 45.5v-117h12.2v117h-12.2zm89.3-56.9v40.1c0 4.1 10.1 4.9 10.1 4.9l-.6 10.8c-8.6 0-15.7.7-20-3.4a71.68 71.68 0 0 1-29.3 6.1c-7.5 0-13.2-2.1-17.1-6.4s-5.9-10.3-5.9-18.3 2-13.8 6-17.5 10.3-6.1 18.9-6.9l25.6-2.4v-7c0-5.5-1.2-9.5-3.6-11.9s-5.7-3.6-9.8-3.6h-32.1V92.5h31.3c9.2 0 15.9 2.1 20.1 6.4s6.4 10.9 6.4 19.9zM394.7 152c0 10 4.1 15 12.4 15a65.27 65.27 0 0 0 21.8-3.7l3.7-1.3v-26.9l-24.1 2.3c-4.9.4-8.4 1.8-10.6 4.2s-3.2 5.9-3.2 10.4zm97.9-48.6c-11.8 0-17.8 4.1-17.8 12.4 0 3.8 1.4 6.5 4.1 8.1s8.9 3.2 18.6 4.9 16.5 4 20.5 7.1 6 8.7 6 17.1-2.7 14.5-8.1 18.4-13.2 5.9-23.6 5.9c-6.7 0-29.2-2.5-29.2-2.5l.7-10.6c12.9 1.2 22.3 2.2 28.6 2.2s11.1-1 14.4-3 5-5.4 5-10.1-1.4-7.9-4.2-9.6-9-3.3-18.6-4.8-16.4-3.7-20.4-6.7-6-8.4-6-16.3 2.8-13.8 8.4-17.6 12.6-5.7 20.9-5.7c6.6 0 29.6 1.7 29.6 1.7V105c-12.1-.7-22-1.6-28.9-1.6zm90.4 1.4h-25.9v39c0 9.3.7 15.5 2 18.4s4.6 4.4 9.7 4.4l14.5-1 .8 10.1a111.1 111.1 0 0 1-16.6 1.8c-8.5 0-14.3-2.1-17.6-6.2s-4.9-12-4.9-23.6v-42.9h-11.6V94.2H545v-25h12.1v24.9H583v10.7zm17-29.1V61.6h12.2v14.2zm0 100V94.2h12.2v81.5H600zm65.2-83.2c3.6 0 9.7.7 18.3 2l3.9.5-.5 9.9a187.31 187.31 0 0 0-19.2-1.5c-9.2 0-15.5 2.2-18.8 6.6s-5 12.6-5 24.5 1.5 20.2 4.6 24.9 9.5 7 19.3 7l19.2-1.5.5 10.1c-10.1 1.5-17.7 2.3-22.7 2.3-12.7 0-21.5-3.3-26.3-9.8s-7.3-17.5-7.3-33 2.6-26.4 7.8-32.6 14-9.4 26.2-9.4z"/></svg>
+  </div>
+
+  <script>
+  (function() {
+    var step = 0;
+    var VIEWS = ['v-health', 'v-anomaly-list', 'v-anomaly-detail', 'v-blast-radius'];
+    var FORWARD = new Set(['ArrowRight', 'Space', 'PageDown']);
+    var BACK    = new Set(['ArrowLeft',  'PageUp']);
+
+    // ── Conversation states ──
+    var T    = function(t) { return '<div class="msg-u"><div class="msg-bubble">'+t+'</div></div>'; };
+    var TOOL = function(n) { return '<div class="msg-tool"><div class="tool-block"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="4.5" r="2"/><path d="M2 11c0-2.2 1.8-3.5 4-3.5s4 1.3 4 3.5"/></svg><span class="tool-name">'+n+'</span><span class="tool-check">✓</span></div></div>'; };
+    var AI   = function(t) { return '<div class="msg-ai">'+t+'</div>'; };
+    var SEP  = function()  { return '<div class="msg-sep"></div>'; };
+
+    var C1 = T('check health for prod-us') + TOOL('elastic_health_summary') + AI('prod-us is degraded: memory 84%, 3 pod restarts detected in the last hour.');
+    var C2 = C1 + SEP() + T('show me the anomalies') + TOOL('get_anomaly_explainer') + AI('12 anomalies across 4 services. Checkout has a critical p99 latency spike at 93/100.');
+    var C3 = C2 + SEP() + T('drill into the checkout anomaly') + TOOL('get_anomaly_detail') + AI('p99 spiked 2.8× typical (520ms vs 185ms). Deviation +181%. High confidence root cause.');
+    var C4 = C3 + SEP() + T('what\'s the blast radius?') + TOOL('get_blast_radius') + AI('Node ip-10-0-12-84 is at risk. 2 full outages, 4 degraded, 31 unaffected. Rescheduling infeasible.');
+
+    var CONVS = { 'v-health': C1, 'v-anomaly-list': C2, 'v-anomaly-detail': C3, 'v-blast-radius': C4 };
+
+    function showView(id) {
+      document.querySelectorAll('.mcp-view').forEach(function(v) { v.classList.remove('active'); });
+      document.getElementById(id).classList.add('active');
+      var thread = document.getElementById('conv-thread');
+      if (thread && CONVS[id]) {
+        thread.innerHTML = CONVS[id];
+        thread.scrollTop = thread.scrollHeight;
+      }
+      if (id === 'v-blast-radius') initBlastRadius();
+    }
+
+    var TOTAL = VIEWS.length - 1;
+
+    function handleKey(key) {
+      if (FORWARD.has(key) && step < TOTAL) {
+        step++;
+        showView(VIEWS[step]);
+        if (step >= TOTAL && window.parent !== window) {
+          window.parent.postMessage({ type: 'nav-unlock' }, '*');
+        }
+      } else if (BACK.has(key)) {
+        if (step === 0) {
+          window.parent.postMessage({ type: 'nav-prev' }, '*');
+        } else {
+          if (step >= TOTAL && window.parent !== window) {
+            window.parent.postMessage({ type: 'nav-lock' }, '*');
+          }
+          step--;
+          showView(VIEWS[step]);
+        }
+      }
+    }
+
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'player-keydown') handleKey(e.data.key);
+    });
+
+    window.addEventListener('keydown', function(e) {
+      var key = e.code || e.key;
+      var consumable = (FORWARD.has(key) && step < TOTAL) || (BACK.has(key) && step > 0);
+      if (consumable) { e.stopImmediatePropagation(); handleKey(key); }
+    }, { capture: true });
+
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'nav-lock' }, '*');
+    }
+
+    // Init
+    showView('v-health');
+
+    // Build timeline rows
+    var TL_DATA = [
+      { name: 'checkout',       cells: [0,0,0,0,0,1,1,2,3,3,2,2,2,1,1] },
+      { name: 'shipping',       cells: [0,0,0,0,0,0,0,1,1,2,1,1,1,0,0] },
+      { name: 'payments',       cells: [0,0,0,0,0,0,1,1,1,1,1,0,0,0,0] },
+      { name: 'node-us-east-4', cells: [0,0,0,0,0,0,0,0,0,1,1,1,1,0,0] },
+      { name: 'node-us-west-1', cells: [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1] },
+    ];
+    var tlContainer = document.getElementById('timeline-rows');
+    TL_DATA.forEach(function(d) {
+      var row = document.createElement('div');
+      row.className = 'tl-row';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'tl-name';
+      nameEl.textContent = d.name;
+      var cellsEl = document.createElement('div');
+      cellsEl.className = 'tl-cells';
+      d.cells.forEach(function(v) {
+        var c = document.createElement('div');
+        c.className = 'tl-cell tl-c' + v;
+        cellsEl.appendChild(c);
+      });
+      row.appendChild(nameEl);
+      row.appendChild(cellsEl);
+      tlContainer.appendChild(row);
+    });
+
+    // Blast radius animation
+    var blastInited = false;
+    function initBlastRadius() {
+      if (blastInited) return;
+      blastInited = true;
+      var satellites = ['sn-frontend','sn-payments','sn-redis','sn-inventory','sn-checkout','sn-shipping'];
+      var connLines  = ['cl-frontend','cl-payments','cl-redis','cl-inventory','cl-checkout','cl-shipping'];
+      satellites.forEach(function(id, i) {
+        setTimeout(function() {
+          var el = document.getElementById(id);
+          if (el) el.classList.add('visible');
+        }, 150 + i * 180);
+      });
+      connLines.forEach(function(id, i) {
+        setTimeout(function() {
+          var el = document.getElementById(id);
+          if (el) el.classList.add('visible');
+        }, 300 + i * 120);
+      });
+      setTimeout(function() {
+        var arc = document.getElementById('green-arc');
+        if (arc) arc.classList.add('visible');
+        var sg = document.getElementById('safe-group');
+        if (sg) { sg.style.transition = 'opacity 0.5s ease'; setTimeout(function() { sg.style.opacity = '1'; }, 100); }
+      }, 1200);
+    }
+  })();
+  </script>
+
+  <script src="/js/fuckslides.js"></script>
+</body>
+</html>

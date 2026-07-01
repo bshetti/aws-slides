@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nightshift: The Magic Moment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep:     #050D1A;
+      --bg-card:     #0A1628;
+      --blue-bright: #38BDF8;
+      --blue-light:  #7DD3FC;
+      --blue-dim:    #1E3A5F;
+      --text-primary:   #FFFFFF;
+      --text-secondary: #94B8D4;
+      --text-muted:     #4A7A9B;
+      --border: rgba(30, 58, 95, 0.7);
+      --success: #34D399;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(rgba(56,189,248,0.10) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -20%; left: -10%;
+      width: 55%; height: 75%;
+      background: radial-gradient(ellipse, rgba(56,189,248,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    @keyframes fade-in  { from { opacity:0; } to { opacity:1; } }
+    @keyframes fade-up  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+    @keyframes row-in   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @keyframes dot-pop  {
+      0%   { opacity:0; transform:scale(0.3); box-shadow: 0 0 0 0 rgba(56,189,248,0); }
+      60%  { opacity:1; transform:scale(1.5); box-shadow: 0 0 14px 4px rgba(56,189,248,0.5); }
+      100% { opacity:0.9; transform:scale(1); box-shadow: 0 0 8px 2px rgba(56,189,248,0.3); }
+    }
+    @keyframes pulse-glow {
+      0%,100% { box-shadow: 0 0 6px var(--success); }
+      50%      { box-shadow: 0 0 14px var(--success), 0 0 24px rgba(52,211,153,0.3); }
+    }
+    @keyframes card-glow {
+      0%,100% { box-shadow: 0 24px 64px rgba(0,0,0,0.55), 0 0 40px rgba(56,189,248,0.07); }
+      50%      { box-shadow: 0 24px 64px rgba(0,0,0,0.55), 0 0 70px rgba(56,189,248,0.18); }
+    }
+    @keyframes tag-wiggle {
+      0%,100% { transform: rotate(-2deg) scale(1); }
+      15%     { transform: rotate(-5deg) scale(1.06); }
+      30%     { transform: rotate(4deg)  scale(1.08); }
+      45%     { transform: rotate(-3deg) scale(1.04); }
+      60%     { transform: rotate(2deg)  scale(1.02); }
+      75%     { transform: rotate(-1deg) scale(1.01); }
+    }
+
+    .slide {
+      width: 1280px; height: 720px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 19px 51px;
+    }
+    .slide-inner {
+      display: grid;
+      grid-template-columns: 1.35fr 1.44fr;
+      align-items: center;
+      gap: 36px;
+      width: 100%;
+      max-width: 1060px;
+    }
+
+    .ns-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      animation: fade-in 0.5s ease forwards 0.1s;
+    }
+    .ns-wordmark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--blue-bright);
+    }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+
+    .headline {
+      font-size: 70px;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.03;
+      opacity: 0;
+      animation: fade-up 0.65s cubic-bezier(0.2,0,0.2,1) forwards 0.75s;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--blue-bright) 0%, var(--blue-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .story {
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      opacity: 0;
+      animation: fade-up 0.55s ease forwards 1.1s;
+    }
+    .story strong { color: var(--text-primary); }
+
+    .zero-line {
+      opacity: 0;
+      animation: fade-up 0.5s ease forwards 1.4s;
+    }
+    .zero-line .big {
+      font-size: 23px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .zero-line .small {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      margin-top: 0.25rem;
+    }
+
+    .right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      animation: fade-in 0.6s ease forwards 1.8s;
+    }
+
+    .notif-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 806px;
+      position: relative;
+      animation: card-glow 3.5s ease-in-out infinite 2.5s;
+    }
+    .notif-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(56,189,248,0.45), transparent);
+      border-radius: 14px 14px 0 0;
+    }
+
+    .notif-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 13px;
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--border);
+    }
+    .notif-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--success);
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    .notif-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .notif-rows { display: flex; flex-direction: column; }
+
+    .notif-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 11px;
+      align-items: flex-start;
+      opacity: 0;
+    }
+    .notif-rows .notif-row:nth-child(1) { animation: row-in 0.5s ease forwards 2.3s; }
+    .notif-rows .notif-row:nth-child(2) { animation: row-in 0.5s ease forwards 2.9s; }
+    .notif-rows .notif-row:nth-child(3) { animation: row-in 0.5s ease forwards 3.5s; }
+
+    .notif-icon {
+      font-size: 12px;
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+    .notif-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+    .notif-value {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .notif-value.hl { color: var(--text-primary); font-weight: 500; }
+    .notif-value strong { color: var(--text-primary); }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88em;
+      color: var(--blue-light);
+    }
+
+    .notif-footer {
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      animation: fade-in 0.5s ease forwards 4.2s;
+    }
+    .fs-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+    .fs-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--success);
+      text-align: center;
+    }
+    .fs-value.blue { color: var(--blue-bright); }
+
+  </style>
+</head>
+<body>
+
+<div class="slide">
+
+  <div class="slide-inner">
+  <div class="left">
+    <div class="ns-logo">
+      <svg width="32" height="32" viewBox="30 215 220 220" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 4px rgba(56,189,248,0.6)) drop-shadow(0 0 12px rgba(56,189,248,0.25));">
+        <path d="m101.9 306.9 45.2 20.6 45.6-40c.7-3.3 1-6.5 1-10 0-28.1-22.9-51-51-51-16.8 0-32.5 8.3-42 22.2l-7.6 39.3z" fill="#38BDF8"/>
+        <path d="m55.1 354.7c-.7 3.3-1 6.7-1 10.2 0 28.2 23 51.1 51.1 51.1 16.9 0 32.7-8.4 42.2-22.3l7.5-39.2-10-19.2-45.4-20.7z" fill="#38BDF8"/>
+        <path d="m54.9 276.5 31 7.3 6.8-35.2c-4.2-3.2-9.4-5-14.8-5-13.4 0-24.4 10.9-24.4 24.4-.1 3 .4 5.9 1.4 8.5" fill="#38BDF8"/>
+        <path d="m52.2 283.9c-13.8 4.5-23.5 17.8-23.5 32.4 0 14.2 8.8 26.9 22 31.9l43.4-39.2-7.9-17z" fill="#38BDF8"/>
+        <path d="m155.4 393.6c4.3 3.2 9.4 5.1 14.7 5.1 13.4 0 24.4-10.9 24.4-24.4 0-3-.5-5.8-1.5-8.5l-30.9-7.2z" fill="#38BDF8"/>
+        <path d="m161.7 350.4 34 7.9c13.9-4.5 23.5-17.8 23.5-32.5 0-14.1-8.8-26.9-22-31.9l-44.5 39z" fill="#38BDF8"/>
+      </svg>
+      <span class="ns-wordmark">Nightshift</span>
+    </div>
+
+    <h1 class="headline">Wake up<br>to <span class="gradient-text">this.</span></h1>
+
+    <p class="story">
+      You are not buying observability.<br>
+      <strong>You are buying the <span style="background:#F97316; padding:0.06em 0.3em; color:#000; display:inline-block; border-radius:2px; font-size:1.35em; line-height:1.2; animation: tag-wiggle 0.6s cubic-bezier(0.36,0.07,0.19,0.97) forwards 1.6s; transform-origin: center center;">end of on-call.</span></strong>
+    </p>
+
+    <div class="zero-line">
+      <div class="big">Zero pages. Zero 3am calls.</div>
+      <div class="small">one full explanation: ready when you are</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="notif-card">
+      <div class="notif-header">
+        <div class="notif-status">
+          <div class="status-dot"></div>
+          Incident Resolved
+        </div>
+        <div class="notif-time">03:47 AM</div>
+      </div>
+
+      <div class="notif-rows">
+        <div class="notif-row">
+          <div class="notif-icon">⚠️</div>
+          <div>
+            <div class="notif-label">What happened</div>
+            <div class="notif-value hl"><strong>Memory exhaustion</strong> in <span class="mono">payment-service</span> causing <strong>cascading failures</strong> across 3 dependent services</div>
+          </div>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-icon">🔍</div>
+          <div>
+            <div class="notif-label">Root cause</div>
+            <div class="notif-value"><strong>Redis connection pool exhaustion</strong> on <span class="mono">node-03</span> (us-east-1). Pool limit of <strong>100</strong> reached under increased checkout load.</div>
+          </div>
+        </div>
+
+        <div class="notif-row">
+          <div class="notif-icon">✅</div>
+          <div>
+            <div class="notif-label">Fix applied</div>
+            <div class="notif-value">Connection pool limit <strong>increased to 250</strong> via Ansible playbook. Configuration pushed to all affected nodes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notif-footer">
+        <div>
+          <div class="fs-label">Duration</div>
+          <div class="fs-value">4m 23s</div>
+        </div>
+        <div>
+          <div class="fs-label">Actions taken</div>
+          <div class="fs-value blue">2</div>
+        </div>
+        <div>
+          <div class="fs-label">Human pages</div>
+          <div class="fs-value">0</div>
+        </div>
+        <div>
+          <div class="fs-label">All services</div>
+          <div class="fs-value">Healthy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+</div>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

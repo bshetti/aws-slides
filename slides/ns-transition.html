@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Transition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #060A12;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Very faint dot grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* Ambient glow — blooms in slowly */
+    .glow {
+      position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 700px 380px at 50% 52%, rgba(0,191,179,0.06) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 2.4s ease;
+    }
+    .glow.on { opacity: 1; }
+
+    /* Text stage */
+    .stage {
+      text-align: center;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 32px;
+    }
+
+    .beat {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+      line-height: 1.08;
+    }
+    .beat.show { opacity: 1; transform: none; }
+
+    .b1 {
+      font-size: 68px; font-weight: 900;
+      letter-spacing: -0.04em;
+      color: rgba(255,255,255,0.92);
+    }
+
+    .b2 {
+      font-size: 52px; font-weight: 800;
+      letter-spacing: -0.03em;
+      color: rgba(255,255,255,0.45);
+    }
+
+    .b3 {
+      font-size: 68px; font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #38BDF8;
+      text-shadow: 0 0 60px rgba(56,189,248,0.4), 0 0 120px rgba(56,189,248,0.18);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow" id="glow"></div>
+
+  <div class="stage">
+    <div class="beat b1" id="b1">It's 3 AM.</div>
+    <div class="beat b2" id="b2">Something just broke.</div>
+    <div class="beat b3" id="b3">Who's watching?</div>
+  </div>
+
+  <script>
+  (function() {
+    function show(id, delay) {
+      setTimeout(function() {
+        document.getElementById(id).classList.add('show');
+      }, delay);
+    }
+
+    show('b1', 900);
+
+    setTimeout(function() {
+      document.getElementById('glow').classList.add('on');
+    }, 2800);
+
+    show('b2', 3200);
+    show('b3', 6000);
+  })();
+  </script>
+
+  <script src="/js/fuckslides.js"></script>
+</body>
+</html>

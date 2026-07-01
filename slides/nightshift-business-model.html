@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Business Model</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #22242C;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #fff;
+      display: flex; flex-direction: column;
+    }
+
+    @keyframes fade-up { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none} }
+
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding: 17px 45px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow {
+      font-size: 9px;
+      font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 0.2rem;
+    }
+    .bar-title {
+      font-size: 28px;
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+    }
+    .bar-title .hl {
+      background: linear-gradient(135deg,#38BDF8,#BAE6FD);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .bar-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.38); font-weight: 400; margin-top: 0.15rem;
+    }
+
+    .main {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 19px 45px;
+    }
+
+    .tiers-wrap {
+      display: flex; flex-direction: column;
+      gap: 0;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+    }
+
+    .mono-tier {
+      display: grid;
+      grid-template-columns: 179px 1fr 179px;
+      border-radius: 10px; overflow: hidden;
+    }
+    .mono-tier.t1 { border: 1px solid rgba(74,122,155,0.4); }
+    .mono-tier.t2 { border: 1px solid rgba(56,189,248,0.3); }
+    .mono-tier.t3 { border: 1px solid rgba(56,189,248,0.6); box-shadow: 0 0 20px rgba(56,189,248,0.07); }
+
+    .mono-left {
+      padding: 13px 15px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-direction: column; justify-content: center; gap: 0.25rem;
+      background: rgba(255,255,255,0.025);
+    }
+    .mono-tier-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 700; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.28);
+    }
+    .mono-tier-name { font-size: 14px; font-weight: 800; }
+    .mono-tier.t1 .mono-tier-name { color: rgba(255,255,255,0.45); }
+    .mono-tier.t2 .mono-tier-name { color: #BAE6FD; }
+    .mono-tier.t3 .mono-tier-name { color: #38BDF8; }
+
+    .mono-mid {
+      padding: 13px 18px;
+      background: rgba(255,255,255,0.02);
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    .mono-mid p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.52); line-height: 1.6;
+    }
+    .mono-mid p strong { color: #38BDF8; font-weight: 600; }
+
+    .mono-right {
+      padding: 13px 15px;
+      background: rgba(255,255,255,0.015);
+      display: flex; flex-direction: column; justify-content: center; gap: 0.35rem;
+    }
+    .mono-model {
+      font-size: 9px;
+      font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.4;
+    }
+    .mono-tier.t1 .mono-model { color: rgba(255,255,255,0.28); }
+    .mono-tier.t2 .mono-model { color: #BAE6FD; }
+    .mono-tier.t3 .mono-model { color: #38BDF8; }
+    .mono-role {
+      font-size: 9px;
+      color: rgba(255,255,255,0.3); font-style: italic; line-height: 1.4;
+    }
+    .mono-tier.t2 .mono-role, .mono-tier.t3 .mono-role { color: rgba(186,230,253,0.45); }
+
+    .tier-connector {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 7px 0;
+    }
+    .tc-line { flex: 1; height: 1px; background: rgba(56,189,248,0.12); }
+    .tc-label {
+      font-size: 8px;
+      color: rgba(255,255,255,0.22); white-space: nowrap; letter-spacing: 0.04em;
+    }
+
+    .ns-selection {
+      position: relative;
+      border: 1.5px dashed rgba(56,189,248,0.55);
+      border-radius: 14px;
+      padding: 13px;
+      padding-top: 28px;
+      background: rgba(56,189,248,0.025);
+    }
+    .ns-sel-label {
+      position: absolute;
+      top: -1px; right: 15px;
+      transform: translateY(-50%);
+      display: flex; align-items: center; gap: 5px;
+      background: #22242C;
+      padding: 3px 10px 3px 8px;
+      border: 1px dashed rgba(56,189,248,0.45);
+      border-radius: 6px;
+      font-size: 8px;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #38BDF8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>
+      <div class="eyebrow">Business Model</div>
+      <div class="bar-title">Three tiers. <span class="hl">Three reasons to expand.</span></div>
+      <div class="bar-sub">Consumption-based throughout — cost wins the door, Context Layer keeps them, outcomes make them irreplaceable.</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="tiers-wrap">
+
+      <div class="ns-selection">
+        <div class="ns-sel-label">🌙 Nightshift</div>
+
+        <div class="mono-tier t3">
+          <div class="mono-left">
+            <div class="mono-tier-num">TIER 3</div>
+            <div class="mono-tier-name">AI SRE</div>
+          </div>
+          <div class="mono-mid">
+            <p>Autonomous investigation and remediation. Per-incident pricing aligned with customer outcomes: Elastic gets paid when it actually fixes things. The system that handles incidents autonomously is the <strong>last thing a customer wants to replace.</strong></p>
+          </div>
+          <div class="mono-right">
+            <div class="mono-model">TBD</div>
+            <div class="mono-role">Lock-in: can't leave</div>
+          </div>
+        </div>
+
+        <div class="tier-connector">
+          <div class="tc-line"></div>
+          <span class="tc-label">agent handles incidents autonomously → last thing they replace</span>
+          <div class="tc-line"></div>
+        </div>
+
+        <div class="mono-tier t2">
+          <div class="mono-left">
+            <div class="mono-tier-num">TIER 2</div>
+            <div class="mono-tier-name">Context Layer</div>
+          </div>
+          <div class="mono-mid">
+            <p>Knowledge Indicators, Significant Events, Generative O11y, Semantic Code Search. The Context Layer turns raw telemetry into operational understanding. Customers who experience this <strong>don't want to go back to manual triage.</strong></p>
+          </div>
+          <div class="mono-right">
+            <div class="mono-model">Consumption / context ops + KI volume</div>
+            <div class="mono-role">Expand: grows with your data, not your headcount</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tier-connector">
+        <div class="tc-line"></div>
+        <span class="tc-label">customer experiences Context Layer → doesn't go back</span>
+        <div class="tc-line"></div>
+      </div>
+
+      <div class="mono-tier t1">
+        <div class="mono-left">
+          <div class="mono-tier-num">TIER 1</div>
+          <div class="mono-tier-name">O11y Platform</div>
+        </div>
+        <div class="mono-mid">
+          <p>Best-in-class <strong>log storage</strong> and metrics at lower cost than Datadog. No cardinality penalties. Decoupled storage makes full log retention economical at any scale. Logs are the GTM wedge — this is how customers get in the door.</p>
+        </div>
+        <div class="mono-right">
+          <div class="mono-model">Consumption / GB ingested + stored</div>
+          <div class="mono-role">Get in the door: beat on cost</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

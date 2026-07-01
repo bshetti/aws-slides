@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Observability</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100vh;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #22242C;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Animations ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── Top bar ── */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      padding: clamp(0.9rem, 1.3vw, 1.8rem) clamp(2rem, 3.5vw, 5rem);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      animation: fade-up 0.4s ease forwards;
+    }
+
+    .top-bar-left { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    .eyebrow {
+      font-size: clamp(0.55rem, 0.65vw, 0.76rem);
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+    }
+    .bar-title {
+      font-size: clamp(1.4rem, 2.2vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: #fff;
+    }
+
+    /* Signal chips */
+    .signal-chips {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.6rem, 0.9vw, 1.4rem);
+      flex-shrink: 0;
+    }
+    .sig-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: clamp(0.65rem, 0.78vw, 0.9rem);
+    }
+    .sig-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .sig-label { font-weight: 700; }
+    .sig-sub   { font-style: italic; opacity: 0.5; font-size: 0.85em; }
+
+    /* ── Quadrant grid ── */
+    .quad-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      min-height: 0;
+    }
+
+    .q {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(1.6rem, 2.2vw, 3rem) clamp(2rem, 3vw, 4.5rem);
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.02);
+      opacity: 0;
+    }
+
+    /* Remove double borders */
+    .q:nth-child(1),
+    .q:nth-child(2) { border-top: none; }
+    .q:nth-child(1),
+    .q:nth-child(3) { border-left: none; }
+
+    .q1 { --qc: #00BFB3; animation: fade-up 0.45s ease forwards 0.20s; }
+    .q2 { --qc: #2363F4; animation: fade-up 0.45s ease forwards 0.32s; }
+    .q3 { --qc: #E5601A; animation: fade-up 0.45s ease forwards 0.44s; }
+    .q4 { --qc: #FED10A; animation: fade-up 0.45s ease forwards 0.56s; }
+
+    .q-inner { display: flex; flex-direction: column; gap: clamp(0.6rem, 0.9vw, 1.2rem); }
+
+    .q-num {
+      align-self: flex-start;
+      font-size: clamp(0.7rem, 0.85vw, 1rem);
+      font-weight: 900;
+      color: #22242C;
+      background: var(--qc);
+      border-radius: 8px;
+      padding: 0.2em 0.65em;
+      letter-spacing: 0.02em;
+    }
+    .q-title {
+      font-size: clamp(1.4rem, 1.9vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: #fff;
+    }
+    .q-desc {
+      font-size: clamp(0.8rem, 0.95vw, 1.15rem);
+      color: rgba(255,255,255,0.45);
+      line-height: 1.5;
+    }
+    .q-desc em {
+      font-style: normal;
+      color: var(--qc);
+      font-weight: 600;
+    }
+
+    /* Surface chips: q4 */
+    .surface-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.38rem;
+      margin-top: 0.5rem;
+    }
+    .surface-chip {
+      font-size: clamp(0.6rem, 0.7vw, 0.8rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #FED10A;
+      background: rgba(254,209,10,0.08);
+      border: 1px solid rgba(254,209,10,0.22);
+      border-radius: 5px;
+      padding: 0.22em 0.65em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="eyebrow">Elastic Observability · Strategy</div>
+      <div class="bar-title">Agentic Observability</div>
+    </div>
+    <div class="signal-chips">
+      <div class="sig-chip">
+        <span class="sig-dot" style="background:#5DD9D3"></span>
+        <span class="sig-label" style="color:#5DD9D3">Logs</span>
+        <span class="sig-sub">carries context</span>
+      </div>
+      <div class="sig-chip">
+        <span class="sig-dot" style="background:#7BA8FF"></span>
+        <span class="sig-label" style="color:#7BA8FF">Metrics</span>
+        <span class="sig-sub">carries state</span>
+      </div>
+      <div class="sig-chip">
+        <span class="sig-dot" style="background:#F4956A"></span>
+        <span class="sig-label" style="color:#F4956A">Traces</span>
+        <span class="sig-sub">carries both</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2×2 quadrant grid -->
+  <div class="quad-grid">
+
+    <div class="q q1">
+      <div class="q-inner">
+        <span class="q-num">01</span>
+        <div class="q-title">Infer Knowledge<br>from Telemetry</div>
+      </div>
+      <div class="q-desc"><em>No config toil</em>: detect technologies, entities and relationships automatically from every signal stream.</div>
+    </div>
+
+    <div class="q q2">
+      <div class="q-inner">
+        <span class="q-num">02</span>
+        <div class="q-title">Discover Significant<br>Events</div>
+      </div>
+      <div class="q-desc">Stitch alerts into a <em>complete incident picture</em> before the business feels the impact: with agentic investigations.</div>
+    </div>
+
+    <div class="q q3">
+      <div class="q-inner">
+        <span class="q-num">03</span>
+        <div class="q-title">Remediate with<br>Human in the Loop</div>
+      </div>
+      <div class="q-desc"><em>Agentic and procedural workflows</em> that fix issues immediately, grounded in your operational knowledge.</div>
+    </div>
+
+    <div class="q q4">
+      <div class="q-inner">
+        <span class="q-num">04</span>
+        <div class="q-title">Meet customers<br>where they are</div>
+      </div>
+      <div>
+        <div class="q-desc"><em>Any surface</em>: actionable insights delivered via the interface your users already live in.</div>
+        <div class="surface-chips">
+          <span class="surface-chip">UI</span>
+          <span class="surface-chip">Chat</span>
+          <span class="surface-chip">Agent</span>
+          <span class="surface-chip">API</span>
+          <span class="surface-chip">Alerts</span>
+          <span class="surface-chip">Mobile</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

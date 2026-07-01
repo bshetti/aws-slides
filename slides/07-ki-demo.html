@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Indicators</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100vh; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #22242C;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #fff; display: flex; flex-direction: column;
+    }
+
+    @keyframes fade-up  { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none} }
+    @keyframes fade-in  { from{opacity:0}to{opacity:1} }
+    @keyframes row-in   { from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none} }
+
+    /* ── Top bar ── */
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding: clamp(0.9rem, 1.3vw, 1.8rem) clamp(2rem, 3.5vw, 5rem);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow { font-size: clamp(0.58rem, 0.7vw, 0.82rem); font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 0.2rem; }
+    .bar-title { font-size: clamp(1.4rem, 2.2vw, 3rem); font-weight: 800; letter-spacing: -0.03em; }
+    .bar-title em { font-style: normal; color: #00BFB3; }
+    .ki-type-pills { display: flex; gap: 0.5rem; align-items: center; }
+    .ktp { font-size: clamp(0.55rem, 0.65vw, 0.74rem); font-weight: 700; letter-spacing: 0.04em; padding: 0.28em 0.75em; border-radius: 6px; border: 1px solid var(--c); color: var(--c); background: var(--bg); }
+
+    /* ── Main ── */
+    .main { flex: 1; min-height: 0; display: flex; gap: clamp(1.5rem, 2.5vw, 4rem); padding: clamp(1rem, 1.5vw, 2rem) clamp(2rem, 3.5vw, 5rem); align-items: stretch; }
+
+    /* ── Left context ── */
+    .ctx {
+      flex-shrink: 0; width: clamp(180px, 24%, 300px);
+      display: flex; flex-direction: column; justify-content: center;
+      gap: clamp(0.8rem, 1.2vw, 1.8rem);
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+    }
+    .ctx-desc { font-size: clamp(0.75rem, 0.9vw, 1.1rem); color: rgba(255,255,255,0.5); line-height: 1.6; font-weight: 300; }
+    .ctx-desc strong { color: #fff; font-weight: 700; }
+    .type-cards { display: flex; flex-direction: column; gap: 0.42rem; }
+    .type-card { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0.7rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; border-left: 3px solid var(--tc); }
+    .tc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tc); flex-shrink: 0; margin-top: 0.3em; }
+    .tc-name { font-size: clamp(0.62rem, 0.75vw, 0.88rem); font-weight: 700; color: rgba(255,255,255,0.88); }
+    .tc-sub { font-size: clamp(0.5rem, 0.58vw, 0.66rem); color: rgba(255,255,255,0.28); line-height: 1.35; margin-top: 0.1rem; }
+    .ctx-hint { font-size: clamp(0.52rem, 0.6vw, 0.7rem); color: rgba(255,255,255,0.22); font-style: italic; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; }
+    .ctx-hint span { color: #00BFB3; }
+
+    /* ── Browser frame ── */
+    .frame-wrap {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 32px 80px rgba(0,0,0,0.6);
+      opacity: 0; animation: fade-in 0.6s ease forwards 0.35s;
+    }
+    .b-chrome { background: #1C2C50; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0.5rem 0.85rem; display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+    .b-dots { display: flex; gap: 5px; }
+    .b-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .b-url { flex: 1; background: rgba(0,0,0,0.22); border-radius: 4px; padding: 0.18rem 0.65rem; font-family: 'JetBrains Mono', monospace; font-size: clamp(0.46rem, 0.55vw, 0.64rem); color: rgba(255,255,255,0.3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Kibana UI shell ── */
+    .ki-ui { background: #fff; color: #1a1a1a; flex: 1; min-height: 0; display: flex; flex-direction: column; font-family: 'Inter', -apple-system, sans-serif; }
+
+    .ki-topbar { padding: 0.55em 1.2em; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.7em; flex-shrink: 0; font-size: clamp(11px, 1vw, 15px); }
+    .ki-stream { font-family: 'JetBrains Mono', monospace; font-size: 1em; font-weight: 700; color: #1a202c; }
+    .ki-badge-sm { font-size: 0.7em; font-weight: 500; padding: 0.18em 0.55em; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+
+    .ki-nav { display: flex; border-bottom: 2px solid #e2e8f0; padding: 0 1.2em; flex-shrink: 0; font-size: clamp(9px, 0.82vw, 12px); overflow: hidden; }
+    .ki-nav-item { padding: 0.5em 0.6em; white-space: nowrap; font-weight: 500; color: #718096; cursor: default; }
+    .ki-nav-item.active { color: #2363F4; font-weight: 700; border-bottom: 2.5px solid #2363F4; margin-bottom: -2px; }
+    .ki-nav-item .n { display: inline-block; background: #EBF0FF; color: #2363F4; border-radius: 10px; padding: 0 0.45em; margin-left: 0.2em; font-size: 0.85em; }
+
+    .ki-section { padding: 0.5em 1.2em; border-bottom: 1px solid #f0f4f8; display: flex; align-items: center; gap: 0.5em; font-size: clamp(9px, 0.8vw, 11.5px); font-weight: 600; color: #4a5568; flex-shrink: 0; }
+    .ki-sub-nav { display: flex; padding: 0 1.2em; border-bottom: 1px solid #f0f4f8; flex-shrink: 0; font-size: clamp(9px, 0.8vw, 12px); }
+    .ki-sub-item { padding: 0.38em 0.6em; font-weight: 500; color: #718096; cursor: default; }
+    .ki-sub-item.active { color: #2363F4; font-weight: 700; border-bottom: 2px solid #2363F4; margin-bottom: -1px; }
+    .ki-sub-item .c { font-size: 0.9em; margin-left: 0.2em; }
+
+    /* ── View container (crossfade) ── */
+    .ki-views { flex: 1; min-height: 0; position: relative; }
+    .ki-view { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; background: #fff; }
+    .ki-view.active { opacity: 1; pointer-events: auto; }
+
+    /* ── Table view ── */
+    .ki-table-head { display: grid; grid-template-columns: 1fr 110px 78px; padding: 0.32em 1.2em; border-bottom: 2px solid #e2e8f0; flex-shrink: 0; font-size: clamp(8px, 0.7vw, 10px); }
+    .ki-th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #a0aec0; }
+    .ki-rows { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .ki-row { display: grid; grid-template-columns: 1fr 110px 78px; padding: 0.4em 1.2em; border-bottom: 1px solid #f5f7fb; align-items: center; opacity: 0; font-size: clamp(8px, 0.72vw, 10.5px); cursor: pointer; transition: background 0.12s; }
+    .ki-row:hover { background: #f0f5ff; }
+    .ki-row:last-child { border-bottom: none; }
+    .ki-row:nth-child(1)  { animation: row-in 0.22s ease forwards 0.55s; }
+    .ki-row:nth-child(2)  { animation: row-in 0.22s ease forwards 0.67s; }
+    .ki-row:nth-child(3)  { animation: row-in 0.22s ease forwards 0.79s; }
+    .ki-row:nth-child(4)  { animation: row-in 0.22s ease forwards 0.91s; }
+    .ki-row:nth-child(5)  { animation: row-in 0.22s ease forwards 1.03s; }
+    .ki-row:nth-child(6)  { animation: row-in 0.22s ease forwards 1.15s; }
+    .ki-row:nth-child(7)  { animation: row-in 0.22s ease forwards 1.27s; }
+    .ki-row:nth-child(8)  { animation: row-in 0.22s ease forwards 1.39s; }
+    .ki-row:nth-child(9)  { animation: row-in 0.22s ease forwards 1.51s; }
+    .ki-row:nth-child(10) { animation: row-in 0.22s ease forwards 1.63s; }
+    .ki-feat { display: flex; flex-direction: column; gap: 0.1em; overflow: hidden; }
+    .ki-fname { color: #2363F4; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ki-fsub { color: #a0aec0; font-size: 0.85em; }
+    .ki-pill { display: inline-block; font-size: 0.85em; font-weight: 500; padding: 0.2em 0.65em; border-radius: 12px; border: 1px solid #cbd5e0; color: #4a5568; background: #f8fafc; white-space: nowrap; }
+    .ki-conf { display: flex; align-items: center; gap: 0.4em; font-weight: 600; color: #1a202c; }
+    .conf-dot { width: 6px; height: 6px; border-radius: 50%; background: #48bb78; flex-shrink: 0; }
+
+    /* ── Graph view ── */
+    .graph-topbar {
+      display: flex; align-items: center; gap: 0.7em;
+      padding: 0.38em 1em;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0; background: #fff;
+    }
+    .back-btn {
+      display: flex; align-items: center;
+      background: none; border: 1px solid #d1d5db; border-radius: 4px;
+      padding: 0.22em 0.6em; font-size: clamp(8px, 0.72vw, 10px);
+      font-weight: 600; color: #4a5568; cursor: pointer;
+      font-family: inherit; transition: background 0.12s;
+    }
+    .back-btn:hover { background: #f5f5f5; }
+    .graph-title { font-size: clamp(8.5px, 0.78vw, 11px); font-weight: 700; color: #2363F4; }
+    .graph-title span { color: #718096; font-weight: 500; }
+
+    .graph-canvas {
+      flex: 1; position: relative;
+      background: #f5f7fc;
+      background-image: radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px);
+      background-size: 16px 16px;
+      overflow: hidden;
+    }
+    #graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    @keyframes edge-in { to { stroke-dashoffset: 0; } }
+
+    .g-node {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-left: 3px solid #2363F4;
+      border-radius: 5px;
+      padding: 5px 9px 5px 7px;
+      display: flex; align-items: center; gap: 5px;
+      min-width: 120px; max-width: 175px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      opacity: 0; transition: opacity 0.3s ease, box-shadow 0.15s;
+      cursor: default;
+    }
+    .g-node.visible { opacity: 1; }
+    .g-node.highlight { border-left-color: #E6522C; background: #FFF9F5; box-shadow: 0 0 0 2px rgba(230,82,44,0.18), 0 2px 8px rgba(0,0,0,0.1); }
+
+    .g-icon { flex-shrink: 0; }
+    .g-text { flex: 1; min-width: 0; }
+    .g-name { font-size: clamp(8.5px, 0.8vw, 11px); font-weight: 700; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .g-type { font-size: clamp(7px, 0.65vw, 9px); color: #718096; margin-top: 1px; white-space: nowrap; }
+    .g-dot-n { width: 5px; height: 5px; border-radius: 50%; background: #48bb78; flex-shrink: 0; margin-left: 3px; }
+
+    /* port handles */
+    .g-port { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #2363F4; background: #fff; position: absolute; top: 50%; transform: translateY(-50%); }
+    .g-port-l { left: -5px; }
+    .g-port-r { right: -5px; }
+
+    .graph-zoom { position: absolute; bottom: 8px; left: 8px; display: flex; flex-direction: column; gap: 2px; z-index: 10; }
+    .zoom-btn { width: 22px; height: 22px; background: #fff; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #4a5568; font-family: inherit; }
+    .zoom-btn:hover { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>
+      <div class="eyebrow">Streams · Auto-detection</div>
+      <div class="bar-title">Knowledge <em>Indicators</em></div>
+    </div>
+    <div class="ki-type-pills">
+      <span class="ktp" style="--c:#00BFB3;--bg:rgba(0,191,179,0.08)">Entity</span>
+      <span class="ktp" style="--c:#7BA8FF;--bg:rgba(123,168,255,0.08)">Dependency</span>
+      <span class="ktp" style="--c:#93C83E;--bg:rgba(147,200,62,0.08)">Schema</span>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="ctx">
+      <div class="ctx-desc">
+        Streams <strong>automatically extracts</strong> system knowledge from your telemetry: no configuration, no instrumentation required.
+      </div>
+      <div class="type-cards">
+        <div class="type-card" style="--tc:#00BFB3">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Entity</div><div class="tc-sub">Services, databases &amp; technologies detected from log patterns</div></div>
+        </div>
+        <div class="type-card" style="--tc:#7BA8FF">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Dependency</div><div class="tc-sub">Service-to-service relationships inferred from call patterns</div></div>
+        </div>
+        <div class="type-card" style="--tc:#93C83E">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Schema</div><div class="tc-sub">ECS &amp; domain schema mappings applied automatically</div></div>
+        </div>
+      </div>
+      <div class="ctx-hint"><span>Click any row</span> to explore its dependency graph →</div>
+    </div>
+
+    <!-- Browser frame -->
+    <div class="frame-wrap">
+      <div class="b-chrome">
+        <div class="b-dots">
+          <div class="b-dot" style="background:#FF5F57"></div>
+          <div class="b-dot" style="background:#FFBD2E"></div>
+          <div class="b-dot" style="background:#28C940"></div>
+        </div>
+        <div class="b-url" id="browser-url">app/streams/stream/logs-ecommerce-default/knowledge-indicators</div>
+      </div>
+
+      <!-- Kibana UI -->
+      <div class="ki-ui">
+        <div class="ki-topbar">
+          <span class="ki-stream">logs-ecommerce-default</span>
+          <span class="ki-badge-sm" style="color:#555;border-color:#d1d5db">≡ Classic</span>
+          <span class="ki-badge-sm" style="color:#2363F4;border-color:#93C3FF">⊕ ILM Policy: logs</span>
+          <span class="ki-badge-sm" style="color:#38a169;border-color:#9ae6b4">✓ Good quality</span>
+        </div>
+        <div class="ki-nav">
+          <div class="ki-nav-item">Retention</div>
+          <div class="ki-nav-item">Processing</div>
+          <div class="ki-nav-item">Schema</div>
+          <div class="ki-nav-item">Data quality</div>
+          <div class="ki-nav-item active">Knowledge Indicators <span class="n">25</span></div>
+          <div class="ki-nav-item">Rules</div>
+          <div class="ki-nav-item">Advanced</div>
+        </div>
+        <div class="ki-section">∨ Stream features &nbsp; 25</div>
+        <div class="ki-sub-nav">
+          <div class="ki-sub-item active">Active <span class="c">25</span></div>
+          <div class="ki-sub-item">Excluded <span class="c">0</span></div>
+        </div>
+
+        <!-- View container -->
+        <div class="ki-views">
+
+          <!-- TABLE VIEW (default) -->
+          <div class="ki-view active" id="table-view">
+            <div class="ki-table-head">
+              <div class="ki-th">Feature</div>
+              <div class="ki-th">Type</div>
+              <div class="ki-th">Confidence</div>
+            </div>
+            <div class="ki-rows">
+              <div class="ki-row" data-entity="Cart Service">
+                <div class="ki-feat"><div class="ki-fname">Cart Service</div><div class="ki-fsub">service</div></div>
+                <div><span class="ki-pill">Entity</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>99</div>
+              </div>
+              <div class="ki-row" data-entity="cart-service → order-management">
+                <div class="ki-feat"><div class="ki-fname">cart-service → order-management</div><div class="ki-fsub">service_dependency</div></div>
+                <div><span class="ki-pill">Dependency</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>97</div>
+              </div>
+              <div class="ki-row" data-entity="Checkout Service">
+                <div class="ki-feat"><div class="ki-fname">Checkout Service</div><div class="ki-fsub">service</div></div>
+                <div><span class="ki-pill">Entity</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>99</div>
+              </div>
+              <div class="ki-row" data-entity="checkout-service → payment-service">
+                <div class="ki-feat"><div class="ki-fname">checkout-service → payment-service</div><div class="ki-fsub">service_dependency</div></div>
+                <div><span class="ki-pill">Dependency</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>97</div>
+              </div>
+              <div class="ki-row" data-entity="checkout-service → product-catalog">
+                <div class="ki-feat"><div class="ki-fname">checkout-service → product-catalog</div><div class="ki-fsub">service_dependency</div></div>
+                <div><span class="ki-pill">Dependency</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>97</div>
+              </div>
+              <div class="ki-row" data-entity="checkout-service → recommendation-engine">
+                <div class="ki-feat"><div class="ki-fname">checkout-service → recommendation-engine</div><div class="ki-fsub">service_dependency</div></div>
+                <div><span class="ki-pill">Dependency</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>93</div>
+              </div>
+              <div class="ki-row" data-entity="Elastic Common Schema">
+                <div class="ki-feat"><div class="ki-fname">Elastic Common Schema</div><div class="ki-fsub">ecs</div></div>
+                <div><span class="ki-pill">Schema</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>98</div>
+              </div>
+              <div class="ki-row" data-entity="Elasticsearch">
+                <div class="ki-feat"><div class="ki-fname">Elasticsearch</div><div class="ki-fsub">database</div></div>
+                <div><span class="ki-pill">Entity</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>97</div>
+              </div>
+              <div class="ki-row" data-entity="Fraud Detection Service">
+                <div class="ki-feat"><div class="ki-fname">Fraud Detection Service</div><div class="ki-fsub">service</div></div>
+                <div><span class="ki-pill">Entity</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>88</div>
+              </div>
+              <div class="ki-row" data-entity="Order Management Service">
+                <div class="ki-feat"><div class="ki-fname">Order Management Service</div><div class="ki-fsub">service</div></div>
+                <div><span class="ki-pill">Entity</span></div>
+                <div class="ki-conf"><span class="conf-dot"></span>99</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GRAPH VIEW -->
+          <div class="ki-view" id="graph-view">
+            <div class="graph-topbar">
+              <button class="back-btn" id="back-btn">← Back</button>
+              <span class="graph-title" id="graph-title">Dependencies</span>
+            </div>
+            <div class="graph-canvas" id="graph-canvas">
+              <svg id="graph-svg"></svg>
+
+              <!-- Nodes: positions set by JS -->
+              <div class="g-node" id="gn-cart"     data-name="Cart Service">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">Cart Service</div><div class="g-type">entity · service</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-rabbit" data-name="RabbitMQ">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">RabbitMQ</div><div class="g-type">entity · message_queue</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-catalog" data-name="Product Catalog Service">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">Product Catalog Service</div><div class="g-type">entity · service</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-reco" data-name="Recommendation Engine">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">Recommendation Engine</div><div class="g-type">entity · service</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-elastic" data-name="Elasticsearch">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">Elasticsearch</div><div class="g-type">entity · database</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-postgres" data-name="PostgreSQL">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">PostgreSQL</div><div class="g-type">entity · database</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-redis" data-name="Redis">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">Redis</div><div class="g-type">entity · cache</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="g-node" id="gn-ecs" data-name="Elastic Common Schema">
+                <div class="g-port g-port-l"></div>
+                <div class="g-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#2363F4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,1 11,10.5 1,10.5"/><circle cx="6" cy="1.2" r="1.2" fill="#2363F4" stroke="none"/><circle cx="10.8" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/><circle cx="1.2" cy="10.5" r="1.2" fill="#2363F4" stroke="none"/></svg></div>
+                <div class="g-text"><div class="g-name">Elastic Common Schema</div><div class="g-type">schema · ecs</div></div>
+                <div class="g-dot-n"></div>
+                <div class="g-port g-port-r"></div>
+              </div>
+
+              <div class="graph-zoom">
+                <button class="zoom-btn">+</button>
+                <button class="zoom-btn">−</button>
+                <button class="zoom-btn" style="font-size:10px">⊡</button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- ki-views -->
+      </div><!-- ki-ui -->
+    </div><!-- frame-wrap -->
+
+  </div><!-- main -->
+
+  <script>
+  // ── Node layout: {id, xPct, yPct} relative to canvas ──
+  const NODE_LAYOUT = [
+    { id: 'cart',     x: 3,  y: 13 },
+    { id: 'rabbit',   x: 37, y: 13 },
+    { id: 'catalog',  x: 3,  y: 40 },
+    { id: 'reco',     x: 3,  y: 64 },
+    { id: 'elastic',  x: 37, y: 52 },
+    { id: 'postgres', x: 62, y: 40 },
+    { id: 'redis',    x: 82, y: 40 },
+    { id: 'ecs',      x: 3,  y: 84 },
+  ];
+
+  const EDGES = [
+    { from: 'cart',    to: 'rabbit'   },
+    { from: 'catalog', to: 'elastic'  },
+    { from: 'reco',    to: 'elastic'  },
+    { from: 'elastic', to: 'postgres' },
+    { from: 'postgres', to: 'redis'   },
+  ];
+
+  const tableView = document.getElementById('table-view');
+  const graphView = document.getElementById('graph-view');
+  const graphTitle = document.getElementById('graph-title');
+  const backBtn = document.getElementById('back-btn');
+  const browserUrl = document.getElementById('browser-url');
+  const canvas = document.getElementById('graph-canvas');
+  const svg = document.getElementById('graph-svg');
+
+  // Apply node positions
+  function layoutNodes() {
+    const cw = canvas.offsetWidth, ch = canvas.offsetHeight;
+    NODE_LAYOUT.forEach(({ id, x, y }) => {
+      const el = document.getElementById('gn-' + id);
+      if (!el) return;
+      el.style.left = (x / 100 * cw) + 'px';
+      el.style.top  = (y / 100 * ch) + 'px';
+    });
+  }
+
+  // Draw dashed SVG connections
+  function drawEdges() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const base = canvas.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${base.width} ${base.height}`);
+
+    // Arrow marker
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    marker.setAttribute('id', 'arr'); marker.setAttribute('viewBox', '0 0 8 8');
+    marker.setAttribute('refX', '7'); marker.setAttribute('refY', '4');
+    marker.setAttribute('markerWidth', '5'); marker.setAttribute('markerHeight', '5');
+    marker.setAttribute('orient', 'auto');
+    const mp = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    mp.setAttribute('d', 'M0,0 L8,4 L0,8 Z'); mp.setAttribute('fill', '#2363F4'); mp.setAttribute('fill-opacity', '0.45');
+    marker.appendChild(mp); defs.appendChild(marker); svg.appendChild(defs);
+
+    function nodeRect(id) {
+      const el = document.getElementById('gn-' + id);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { left: r.left - base.left, right: r.right - base.left, cy: r.top - base.top + r.height / 2, cx: r.left - base.left + r.width / 2 };
+    }
+
+    EDGES.forEach(({ from, to }, i) => {
+      const a = nodeRect(from), b = nodeRect(to);
+      if (!a || !b) return;
+      const cpx = (a.right + b.left) / 2;
+      const d = `M${a.right},${a.cy} C${cpx},${a.cy} ${cpx},${b.cy} ${b.left},${b.cy}`;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#2363F4');
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('stroke-opacity', '0.4');
+      path.setAttribute('stroke-dasharray', '5 3');
+      path.setAttribute('marker-end', 'url(#arr)');
+      svg.appendChild(path);
+    });
+  }
+
+  // Show graph view
+  function showGraph(entityName) {
+    tableView.classList.remove('active');
+    graphView.classList.add('active');
+
+    const short = entityName.length > 30 ? entityName.slice(0, 28) + '…' : entityName;
+    graphTitle.innerHTML = `<span>${short}</span> · Dependencies`;
+    browserUrl.textContent = 'app/streams/stream/logs-ecommerce-default/knowledge-indicators/graph';
+
+    // Highlight matching node
+    document.querySelectorAll('.g-node').forEach(n => {
+      n.classList.toggle('highlight', n.dataset.name === entityName);
+    });
+
+    layoutNodes();
+    requestAnimationFrame(() => {
+      drawEdges();
+      document.querySelectorAll('.g-node').forEach((n, i) => {
+        setTimeout(() => n.classList.add('visible'), i * 60);
+      });
+    });
+  }
+
+  // Show table view
+  function showTable() {
+    graphView.classList.remove('active');
+    tableView.classList.add('active');
+    document.querySelectorAll('.g-node').forEach(n => n.classList.remove('visible'));
+    browserUrl.textContent = 'app/streams/stream/logs-ecommerce-default/knowledge-indicators';
+  }
+
+  // Wire up row clicks
+  document.querySelectorAll('.ki-row').forEach(row => {
+    row.addEventListener('click', () => showGraph(row.dataset.entity));
+  });
+
+  backBtn.addEventListener('click', showTable);
+
+  window.addEventListener('resize', () => {
+    if (graphView.classList.contains('active')) {
+      layoutNodes();
+      drawEdges();
+    }
+  });
+  </script>
+
+<script src="js/main.js"></script>
+</body>
+</html>

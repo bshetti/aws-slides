@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proven Track Record of Innovation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100vh;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #22242C;
+      display: flex;
+      flex-direction: row;
+    }
+
+    /* ── Animations ── */
+    @keyframes slide-right {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slide-left {
+      from { opacity: 0; transform: translateX(30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes scale-y {
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
+    }
+
+    /* ── LEFT PANE ── */
+    .pane-left {
+      width: 44%;
+      flex-shrink: 0;
+      background-color: #22242C;
+      background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      padding: clamp(1.6rem, 2.2vw, 3rem) clamp(2rem, 3vw, 4rem);
+      gap: clamp(1rem, 1.4vw, 2rem);
+      color: #fff;
+      opacity: 0;
+      animation: slide-right 0.5s ease forwards 0.1s;
+    }
+
+    .eyebrow {
+      font-size: clamp(0.55rem, 0.65vw, 0.76rem);
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      margin-bottom: 0.4rem;
+    }
+    .headline {
+      font-size: clamp(1.3rem, 1.8vw, 2.6rem);
+      font-weight: 300;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      color: #fff;
+    }
+    .headline strong { font-weight: 900; color: #7BA8FF; }
+
+    /* ── Vertical timeline ── */
+    .timeline {
+      flex: 1;
+      position: relative;
+      padding-left: clamp(1.4rem, 1.8vw, 2.2rem);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.8rem, 1vw, 1.4rem);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .timeline::after {
+      content: '';
+      position: absolute;
+      left: 4px; top: 6px;
+      width: 1px;
+      height: calc(100% - 6px);
+      background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.03));
+      transform-origin: top;
+      transform: scaleY(0);
+      animation: scale-y 0.6s ease forwards 0.4s;
+    }
+
+    .era {
+      position: relative;
+      opacity: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+    }
+    .era:nth-child(1) { animation: fade-in 0.4s ease forwards 0.60s; }
+    .era:nth-child(2) { animation: fade-in 0.4s ease forwards 0.75s; }
+    .era:nth-child(3) { animation: fade-in 0.4s ease forwards 0.90s; }
+    .era:nth-child(4) { animation: fade-in 0.4s ease forwards 1.05s; }
+
+    .era-dot {
+      position: absolute;
+      left: calc(-1 * clamp(1.4rem, 1.8vw, 2.2rem));
+      top: 5px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--ec);
+      flex-shrink: 0;
+    }
+
+    .era-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.68rem, 0.82vw, 0.96rem);
+      font-weight: 600;
+      color: var(--ec);
+      letter-spacing: 0.04em;
+    }
+    .era-name {
+      font-size: clamp(1rem, 1.2vw, 1.55rem);
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.15rem;
+    }
+    .era-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .era-bullets li {
+      font-size: clamp(0.78rem, 0.92vw, 1.08rem);
+      color: rgba(255,255,255,0.45);
+      line-height: 1.4;
+      padding-left: 0.75rem;
+      position: relative;
+    }
+    .era-bullets li::before {
+      content: '·';
+      position: absolute; left: 0;
+      color: var(--ec);
+      opacity: 0.65;
+    }
+    .era-tags {
+      display: flex; flex-wrap: wrap; gap: 0.28rem;
+      margin-top: 0.35rem;
+    }
+    .era-tag {
+      font-size: clamp(0.58rem, 0.68vw, 0.78rem);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 0.16em 0.56em;
+    }
+
+    .era-foundation   { --ec: rgba(255,255,255,0.5); }
+    .era-platform     { --ec: #7BA8FF; }
+    .era-intelligence { --ec: #00BFB3; }
+    .era-optimize     { --ec: #5DD9D3; }
+
+    /* ── RIGHT PANE ── */
+    .pane-right {
+      flex: 1;
+      background-color: #22242C;
+      background-image:
+        radial-gradient(rgba(35,99,244,0.12) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(35,99,244,0.12) 0%, transparent 55%);
+      background-size: 28px 28px, 100% 100%;
+      border-left: 4px solid #FED10A;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(2.5rem, 3.5vw, 5rem) clamp(2.5rem, 4vw, 6rem);
+      color: #fff;
+      opacity: 0;
+      animation: slide-left 0.6s ease forwards 0.2s;
+    }
+
+    .featured-top { display: flex; flex-direction: column; gap: clamp(0.6rem, 0.8vw, 1.1rem); }
+
+    .featured-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.78rem, 0.92vw, 1.1rem);
+      font-weight: 600;
+      color: #FED10A;
+      letter-spacing: 0.05em;
+    }
+    .featured-label {
+      font-size: clamp(0.55rem, 0.65vw, 0.76rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+    }
+    .featured-title {
+      font-size: clamp(2.8rem, 4.8vw, 6.8rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.02;
+      color: #fff;
+    }
+
+    .featured-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.55rem, 0.75vw, 1rem);
+      margin-top: clamp(0.8rem, 1.1vw, 1.6rem);
+    }
+    .featured-bullets li {
+      font-size: clamp(0.9rem, 1.05vw, 1.4rem);
+      color: rgba(255,255,255,0.7);
+      line-height: 1.45;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+    .featured-bullets li::before {
+      content: '';
+      position: absolute; left: 0; top: 0.55em;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #FED10A;
+    }
+    .featured-bullets li strong { color: #fff; font-weight: 700; }
+
+    .featured-tags {
+      display: flex; flex-wrap: wrap; gap: 0.45rem;
+    }
+    .featured-tag {
+      font-size: clamp(0.62rem, 0.72vw, 0.84rem);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #FED10A;
+      background: rgba(254,209,10,0.1);
+      border: 1px solid rgba(254,209,10,0.28);
+      border-radius: 5px;
+      padding: 0.28em 0.8em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT: Past eras on timeline -->
+  <div class="pane-left">
+    <div>
+      <div class="eyebrow">Elastic Observability · Heritage</div>
+      <h1 class="headline">A <strong>proven track record</strong> of innovation</h1>
+    </div>
+
+    <div class="timeline">
+
+      <div class="era era-foundation">
+        <div class="era-dot"></div>
+        <div class="era-date">2011 – 2014</div>
+        <div class="era-name">The Origin</div>
+        <ul class="era-bullets">
+          <li>Elasticsearch open-sourced: search &amp; analytics at scale</li>
+          <li>Logstash &amp; Kibana form the ELK Stack</li>
+          <li>Beats: lightweight data shippers</li>
+          <li>First log management &amp; infrastructure monitoring</li>
+        </ul>
+        <div class="era-tags">
+          <span class="era-tag">ELK</span>
+          <span class="era-tag">Logstash</span>
+          <span class="era-tag">Kibana</span>
+          <span class="era-tag">Beats</span>
+        </div>
+      </div>
+
+      <div class="era era-platform">
+        <div class="era-dot"></div>
+        <div class="era-date">2015 – 2017</div>
+        <div class="era-name">The Platform Era</div>
+        <ul class="era-bullets">
+          <li>Prelert acquisition: ML &amp; anomaly detection</li>
+          <li>X-Pack: security, alerting, monitoring, graph</li>
+          <li>Watcher (alerting) &amp; Shield (security)</li>
+          <li>First AIOps foundations</li>
+        </ul>
+        <div class="era-tags">
+          <span class="era-tag">ML</span>
+          <span class="era-tag">X-Pack</span>
+          <span class="era-tag">AIOps</span>
+          <span class="era-tag">Alerting</span>
+        </div>
+      </div>
+
+      <div class="era era-intelligence">
+        <div class="era-dot"></div>
+        <div class="era-date">2018 – 2020</div>
+        <div class="era-name">The Intelligence Layer</div>
+        <ul class="era-bullets">
+          <li>Opbeat acquisition → Elastic APM</li>
+          <li>Native OpenTelemetry support</li>
+          <li>RUM, Uptime &amp; SIEM launched</li>
+          <li>Logs UI, Metrics UI, unified Observability</li>
+        </ul>
+        <div class="era-tags">
+          <span class="era-tag">APM</span>
+          <span class="era-tag">OTel</span>
+          <span class="era-tag">RUM</span>
+          <span class="era-tag">SIEM</span>
+        </div>
+      </div>
+
+      <div class="era era-optimize">
+        <div class="era-dot"></div>
+        <div class="era-date">2021 – 2024</div>
+        <div class="era-name">The Optimization Era</div>
+        <ul class="era-bullets">
+          <li>Universal Profiling &amp; SLO management</li>
+          <li>ES|QL: purpose-built observability query language</li>
+          <li>LogsDB: 65% storage reduction vs standard ES</li>
+          <li>AI Assistant, LLM Observability &amp; EDOT</li>
+        </ul>
+        <div class="era-tags">
+          <span class="era-tag">ES|QL</span>
+          <span class="era-tag">LogsDB</span>
+          <span class="era-tag">SLO</span>
+          <span class="era-tag">Profiling</span>
+          <span class="era-tag">EDOT</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: Featured current era -->
+  <div class="pane-right">
+    <div class="featured-top">
+      <div class="featured-date">2025 →</div>
+      <div class="featured-label">Now shipping</div>
+      <div class="featured-title">The Agentic<br>Era</div>
+      <ul class="featured-bullets">
+        <li>Streams: smart log management at any scale</li>
+        <li>Serverless observability</li>
+        <li>LLM Observability at scale</li>
+        <li><strong>Agentic SRE</strong>: AI that investigates &amp; fixes</li>
+        <li>Zero on-call pages</li>
+      </ul>
+    </div>
+    <div class="featured-tags">
+      <span class="featured-tag">Streams</span>
+      <span class="featured-tag">Serverless</span>
+      <span class="featured-tag">Agentic SRE</span>
+    </div>
+  </div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

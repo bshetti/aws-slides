@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The AI scale problem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #fff; color: #0D0D0D;
+    }
+
+    @keyframes fade-up  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @keyframes fade-in  { from { opacity:0; } to { opacity:1; } }
+    @keyframes line-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+    .slide {
+      width: 1280px; height: 720px;
+      display: flex; flex-direction: column;
+      padding: 28px 66px 16px;
+    }
+
+    .content {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      justify-content: center;
+    }
+
+    /* ── Header ── */
+    .eyebrow {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #9AA5B8;
+      animation: fade-in 0.4s ease forwards;
+    }
+    .headline {
+      font-size: 42px; font-weight: 300;
+      letter-spacing: -0.03em; line-height: 1.08; color: #0D0D0D;
+      margin-top: 4px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.1s;
+    }
+    .headline strong { font-weight: 900; color: #1D55E0; }
+
+    /* ── Before row ── */
+    .before-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-top: 16px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+    }
+    .before-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #9AA5B8; flex-shrink: 0;
+    }
+    .before-chip {
+      font-size: 11.5px; font-weight: 500; color: #4A5068;
+      background: #F2F5FB; border: 1px solid #DDE1EE;
+      border-radius: 6px; padding: 0.22em 0.65em;
+    }
+
+    /* ── AI divider ── */
+    .ai-divider {
+      display: flex; align-items: center; gap: 14px;
+      margin-top: 16px;
+      opacity: 0; animation: fade-in 0.5s ease forwards 0.3s;
+    }
+    .ai-divider-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, #1D55E0 40%, transparent);
+      transform-origin: left; transform: scaleX(0);
+      animation: line-draw 0.6s ease forwards 0.3s;
+    }
+    .ai-divider-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #fff; background: #1D55E0;
+      border-radius: 20px; padding: 0.28em 1em;
+      flex-shrink: 0; white-space: nowrap;
+    }
+
+    /* ── Stage grid ── */
+    .stages-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      margin-top: 14px;
+    }
+
+    .stage-col {
+      background: #F2F5FB; border: 1px solid #DDE1EE;
+      border-top: 3px solid var(--c);
+      border-radius: 14px; padding: 14px 16px 13px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .stage-col-dev  { --c: #1D55E0; }
+    .stage-col-test { --c: #1B9B75; }
+    .stage-col-prod { --c: #E87A1D; }
+
+    .stage-col:nth-child(1) { opacity:0; animation: fade-up 0.5s ease forwards 0.45s; }
+    .stage-col:nth-child(2) { opacity:0; animation: fade-up 0.5s ease forwards 0.57s; }
+    .stage-col:nth-child(3) { opacity:0; animation: fade-up 0.5s ease forwards 0.69s; }
+
+    .stage-header { display: flex; align-items: baseline; gap: 10px; }
+    .stage-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--c); opacity: 0.75;
+    }
+    .stage-mult {
+      font-size: 46px; font-weight: 900;
+      letter-spacing: -0.04em; line-height: 1; color: var(--c);
+      margin-left: auto;
+    }
+
+    /* ── Stage visual ── */
+    .stage-visual { flex-shrink: 0; }
+    .stage-visual svg { display: block; overflow: visible; }
+
+    /* ── KPI chips ── */
+    .stage-kpis {
+      display: flex; flex-direction: column; gap: 4px;
+      margin-top: 2px;
+    }
+    .kpi {
+      font-size: 11px; font-weight: 500; color: #4A5068;
+      display: flex; align-items: center; gap: 6px; line-height: 1.3;
+    }
+    .kpi::before {
+      content: ''; flex-shrink: 0;
+      width: 3.5px; height: 3.5px; border-radius: 50%;
+      background: var(--c); opacity: 0.5;
+    }
+    .kpi strong { color: #1A1F36; font-weight: 700; }
+    .kpi.hot { color: var(--c); font-weight: 600; }
+    .kpi.hot::before { opacity: 0.9; }
+
+    /* ── Bottom strip ── */
+    .bottom-strip {
+      background: #F2F5FB; border: 1px solid #DDE1EE;
+      border-radius: 10px; padding: 10px 20px;
+      margin-top: 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.85s;
+      flex-shrink: 0;
+    }
+    .bottom-result {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #9AA5B8; flex-shrink: 0;
+    }
+    .bottom-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+    .bottom-pill {
+      font-size: 11.5px; font-weight: 600; color: #1A1F36;
+      background: #fff; border: 1px solid #DDE1EE;
+      border-radius: 6px; padding: 0.26em 0.75em;
+    }
+    .bottom-pill.hot {
+      color: #C05010;
+      background: rgba(232,122,29,0.07);
+      border-color: rgba(232,122,29,0.28);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      display: flex; justify-content: flex-end; align-items: center;
+      padding-top: 8px; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="slide">
+<div class="content">
+
+  <div>
+    <div class="eyebrow">Observability · The AI era</div>
+    <h1 class="headline">The challenge you know.<br><strong>At a scale you've never seen.</strong></h1>
+  </div>
+
+  <div class="before-row">
+    <div class="before-label">What we built for →</div>
+    <div class="before-chip">Microservices complexity</div>
+    <div class="before-chip">Multi-cloud sprawl</div>
+    <div class="before-chip">High change velocity</div>
+    <div class="before-chip">Manual toil</div>
+    <div class="before-chip">Alert fatigue</div>
+    <div class="before-chip">Observability cost</div>
+  </div>
+
+  <div class="ai-divider">
+    <div class="ai-divider-line"></div>
+    <div class="ai-divider-badge">Then AI arrived. And multiplied every problem.</div>
+    <div class="ai-divider-line"></div>
+  </div>
+
+  <div class="stages-grid">
+
+    <!-- ── DEV ── -->
+    <div class="stage-col stage-col-dev">
+      <div class="stage-header">
+        <div class="stage-badge">01 · Development</div>
+        <div class="stage-mult">×100</div>
+      </div>
+
+      <div class="stage-visual">
+        <!-- Many AI agents → pipeline → dense commit stream -->
+        <svg viewBox="0 0 330 105" width="100%">
+          <!-- Agent nodes: 2 cols × 3 rows approx -->
+          <circle cx="18" cy="18" r="11" fill="rgba(29,85,224,0.09)" stroke="#1D55E0" stroke-width="1.2"/>
+          <text x="18" y="22" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1D55E0" font-family="Inter">AI</text>
+          <circle cx="18" cy="48" r="11" fill="rgba(29,85,224,0.09)" stroke="#1D55E0" stroke-width="1.2"/>
+          <text x="18" y="52" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1D55E0" font-family="Inter">AI</text>
+          <circle cx="18" cy="78" r="11" fill="rgba(29,85,224,0.09)" stroke="#1D55E0" stroke-width="1.2"/>
+          <text x="18" y="82" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1D55E0" font-family="Inter">AI</text>
+          <circle cx="46" cy="33" r="11" fill="rgba(29,85,224,0.09)" stroke="#1D55E0" stroke-width="1.2"/>
+          <text x="46" y="37" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1D55E0" font-family="Inter">AI</text>
+          <circle cx="46" cy="63" r="11" fill="rgba(29,85,224,0.09)" stroke="#1D55E0" stroke-width="1.2"/>
+          <text x="46" y="67" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1D55E0" font-family="Inter">AI</text>
+          <!-- "···" below agents -->
+          <text x="32" y="98" text-anchor="middle" font-size="11" fill="rgba(29,85,224,0.35)" font-family="Inter">···</text>
+
+          <!-- Converging dashed lines to pipeline -->
+          <line x1="29" y1="18" x2="98" y2="48" stroke="#1D55E0" stroke-width="0.9" stroke-dasharray="3 2" opacity="0.3"/>
+          <line x1="29" y1="48" x2="98" y2="48" stroke="#1D55E0" stroke-width="0.9" stroke-dasharray="3 2" opacity="0.3"/>
+          <line x1="29" y1="78" x2="98" y2="48" stroke="#1D55E0" stroke-width="0.9" stroke-dasharray="3 2" opacity="0.3"/>
+          <line x1="57" y1="33" x2="98" y2="48" stroke="#1D55E0" stroke-width="0.9" stroke-dasharray="3 2" opacity="0.3"/>
+          <line x1="57" y1="63" x2="98" y2="48" stroke="#1D55E0" stroke-width="0.9" stroke-dasharray="3 2" opacity="0.3"/>
+
+          <!-- Pipeline box -->
+          <rect x="98" y="34" width="38" height="28" rx="5" fill="rgba(29,85,224,0.11)" stroke="#1D55E0" stroke-width="1.4"/>
+          <text x="117" y="46" text-anchor="middle" font-size="7" font-weight="700" fill="#1D55E0" font-family="Inter">REPO</text>
+          <text x="117" y="57" text-anchor="middle" font-size="6" fill="rgba(29,85,224,0.55)" font-family="Inter">CI/CD</text>
+
+          <!-- Arrow -->
+          <line x1="136" y1="48" x2="150" y2="48" stroke="#1D55E0" stroke-width="1.2" opacity="0.45"/>
+          <polygon points="150,44.5 157,48 150,51.5" fill="#1D55E0" opacity="0.45"/>
+
+          <!-- Commit grid: 4 rows × 10 cols of squares -->
+          <g id="commit-grid"></g>
+          <text x="240" y="103" text-anchor="middle" font-size="7.5" fill="rgba(29,85,224,0.45)" font-family="JetBrains Mono,monospace">every second · 24/7 · no review</text>
+        </svg>
+      </div>
+
+      <div class="stage-kpis">
+        <div class="kpi"><span>Swarms of agents commit in parallel, around the clock</span></div>
+        <div class="kpi hot"><span><strong>Code ships unread</strong> — unknown deps, unknown risk</span></div>
+        <div class="kpi"><span>More pipelines = more instrumentation cost</span></div>
+      </div>
+    </div>
+
+    <!-- ── TEST ── -->
+    <div class="stage-col stage-col-test">
+      <div class="stage-header">
+        <div class="stage-badge">02 · Testing &amp; Staging</div>
+        <div class="stage-mult">×10</div>
+      </div>
+
+      <div class="stage-visual">
+        <!-- 1 env → many envs -->
+        <svg viewBox="0 0 330 105" width="100%">
+          <!-- Single "before" env box -->
+          <rect x="8" y="24" width="52" height="48" rx="6" fill="rgba(27,155,117,0.09)" stroke="#1B9B75" stroke-width="1.4"/>
+          <text x="34" y="46" text-anchor="middle" font-size="7.5" font-weight="700" fill="#1B9B75" font-family="Inter">staging</text>
+          <text x="34" y="58" text-anchor="middle" font-size="6.5" fill="rgba(27,155,117,0.6)" font-family="JetBrains Mono">env-1</text>
+          <text x="34" y="82" text-anchor="middle" font-size="7.5" fill="rgba(27,155,117,0.5)" font-family="Inter">before</text>
+
+          <!-- Multiplication arrow -->
+          <line x1="62" y1="48" x2="85" y2="48" stroke="#1B9B75" stroke-width="1.3" opacity="0.5"/>
+          <polygon points="85,44.5 92,48 85,51.5" fill="#1B9B75" opacity="0.5"/>
+          <text x="77" y="42" text-anchor="middle" font-size="9" font-weight="800" fill="#1B9B75" font-family="Inter">×10</text>
+
+          <!-- Grid of many envs: 5 cols × 3 rows -->
+          <g id="env-grid"></g>
+
+          <!-- "now" label -->
+          <text x="210" y="103" text-anchor="middle" font-size="7.5" fill="rgba(27,155,117,0.45)" font-family="JetBrains Mono,monospace">now</text>
+        </svg>
+      </div>
+
+      <div class="stage-kpis">
+        <div class="kpi"><span>Agents spin up dozens of environments in parallel</span></div>
+        <div class="kpi hot"><span><strong>Staging permanently out of sync</strong> with prod</span></div>
+        <div class="kpi"><span>Ephemeral envs multiply observability spend</span></div>
+      </div>
+    </div>
+
+    <!-- ── PROD ── -->
+    <div class="stage-col stage-col-prod">
+      <div class="stage-header">
+        <div class="stage-badge">03 · Production</div>
+        <div class="stage-mult">?×</div>
+      </div>
+
+      <div class="stage-visual">
+        <!-- Deploy → incident cascade timeline -->
+        <svg viewBox="0 0 330 105" width="100%">
+          <!-- Timeline axis -->
+          <line x1="10" y1="58" x2="315" y2="58" stroke="#DDE1EE" stroke-width="1.2"/>
+
+          <!-- Deploy markers (triangles up), sparse left then dense right -->
+          <!-- Sparse: 4 deploys in first half -->
+          <polygon points="30,48 36,58 24,58"  fill="rgba(232,122,29,0.5)"/>
+          <polygon points="68,48 74,58 62,58"  fill="rgba(232,122,29,0.5)"/>
+          <polygon points="108,48 114,58 102,58" fill="rgba(232,122,29,0.5)"/>
+          <polygon points="145,48 151,58 139,58" fill="rgba(232,122,29,0.5)"/>
+          <!-- Dense: many deploys in second half -->
+          <polygon points="172,48 177,58 167,58" fill="#E87A1D"/>
+          <polygon points="186,48 191,58 181,58" fill="#E87A1D"/>
+          <polygon points="199,48 204,58 194,58" fill="#E87A1D"/>
+          <polygon points="211,48 216,58 206,58" fill="#E87A1D"/>
+          <polygon points="222,48 227,58 217,58" fill="#E87A1D"/>
+          <polygon points="232,48 237,58 227,58" fill="#E87A1D"/>
+          <polygon points="241,48 246,58 236,58" fill="#E87A1D"/>
+          <polygon points="249,48 254,58 244,58" fill="#E87A1D"/>
+          <polygon points="256,48 261,58 251,58" fill="#E87A1D"/>
+          <polygon points="263,48 268,58 258,58" fill="#E87A1D"/>
+          <polygon points="269,48 274,58 264,58" fill="#E87A1D"/>
+          <polygon points="275,48 280,58 270,58" fill="#E87A1D"/>
+          <polygon points="280,48 285,58 275,58" fill="#E87A1D"/>
+
+          <!-- Incident circles below timeline, cluster growing -->
+          <!-- Sparse (small incidents, left) -->
+          <circle cx="68"  cy="72" r="4.5" fill="none" stroke="rgba(232,122,29,0.5)" stroke-width="1.3"/>
+          <circle cx="145" cy="72" r="4.5" fill="none" stroke="rgba(232,122,29,0.5)" stroke-width="1.3"/>
+          <!-- Dense pile on right -->
+          <circle cx="178" cy="71" r="5" fill="rgba(232,122,29,0.7)" stroke="#E87A1D" stroke-width="1"/>
+          <circle cx="192" cy="71" r="5" fill="rgba(232,122,29,0.7)" stroke="#E87A1D" stroke-width="1"/>
+          <circle cx="205" cy="71" r="5" fill="rgba(232,122,29,0.7)" stroke="#E87A1D" stroke-width="1"/>
+          <circle cx="218" cy="71" r="5" fill="rgba(232,122,29,0.7)" stroke="#E87A1D" stroke-width="1"/>
+          <circle cx="230" cy="71" r="5" fill="rgba(232,122,29,0.7)" stroke="#E87A1D" stroke-width="1"/>
+          <circle cx="242" cy="71" r="5" fill="rgba(232,122,29,0.7)" stroke="#E87A1D" stroke-width="1"/>
+          <circle cx="184" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="198" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="212" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="226" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="240" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="254" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="268" cy="83" r="5" fill="rgba(224,82,82,0.7)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="191" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="207" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="222" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="237" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="252" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="267" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+          <circle cx="281" cy="95" r="5" fill="rgba(224,82,82,0.85)" stroke="#E05252" stroke-width="1"/>
+
+          <!-- Human figure (SRE) far right, tiny, overwhelmed indicator -->
+          <!-- Simple stick-figure-like circles/lines -->
+          <circle cx="305" cy="68" r="7" fill="rgba(224,82,82,0.12)" stroke="#E05252" stroke-width="1.2"/>
+          <text x="305" y="72" text-anchor="middle" font-size="8" fill="#E05252" font-family="Inter">SRE</text>
+          <!-- Alert lines radiating -->
+          <line x1="295" y1="61" x2="290" y2="55" stroke="#E05252" stroke-width="1" opacity="0.5"/>
+          <line x1="305" y1="59" x2="305" y2="53" stroke="#E05252" stroke-width="1" opacity="0.5"/>
+          <line x1="315" y1="61" x2="320" y2="55" stroke="#E05252" stroke-width="1" opacity="0.5"/>
+
+          <!-- Labels -->
+          <text x="30"  y="43" text-anchor="middle" font-size="7" fill="rgba(232,122,29,0.5)" font-family="JetBrains Mono">deploys</text>
+          <text x="228" y="43" text-anchor="middle" font-size="7" fill="#E87A1D" font-weight="700" font-family="JetBrains Mono">AI era</text>
+          <!-- vertical divider -->
+          <line x1="162" y1="30" x2="162" y2="100" stroke="rgba(232,122,29,0.2)" stroke-width="1" stroke-dasharray="3 2"/>
+
+          <!-- x-axis labels -->
+          <text x="10"  y="105" font-size="7.5" fill="#9AA5B8" font-family="JetBrains Mono">before</text>
+          <text x="282" y="105" font-size="7.5" fill="#E87A1D" font-family="JetBrains Mono" font-weight="700">now</text>
+        </svg>
+      </div>
+
+      <div class="stage-kpis">
+        <div class="kpi"><span>Incident rate tracks deployment frequency</span></div>
+        <div class="kpi hot"><span>SREs paged for <strong>code they've never seen</strong></span></div>
+        <div class="kpi"><span>10× services = 10× signals, 10× the bill</span></div>
+      </div>
+    </div>
+
+  </div><!-- stages-grid -->
+
+  <div class="bottom-strip">
+    <div class="bottom-result">The result</div>
+    <div class="bottom-pills">
+      <div class="bottom-pill">More code. More infra. More signals.</div>
+      <div class="bottom-pill hot">Faster failures. Zero context. No runbook.</div>
+      <div class="bottom-pill hot">Observability bill grows as fast as the problem.</div>
+      <div class="bottom-pill">Observability built for humans can't keep up.</div>
+    </div>
+  </div>
+
+</div><!-- content -->
+
+  <div class="footer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 687.5 235.6" style="height:22px;width:auto;display:block"><title>elastic</title><path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/><path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/><path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/><path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/><path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/><path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/><path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/><path fill="#1a1a1a" d="M330.8 165.5l4.7-.5.3 9.6a240.62 240.62 0 0 1-31.8 2.6q-17.55 0-24.9-10.2c-4.9-6.8-7.3-17.4-7.3-31.7q0-42.9 34.1-42.9c11 0 19.2 3.1 24.6 9.2s8.1 15.8 8.1 28.9l-.7 9.3h-53.8c0 9 1.6 15.7 4.9 20s8.9 6.5 17 6.5a230 230 0 0 0 24.8-.8zm-4.4-35.3c0-10-1.6-17.1-4.8-21.2s-8.4-6.2-15.6-6.2-12.7 2.2-16.3 6.5-5.5 11.3-5.6 20.9h42.3zm29.2 45.5v-117h12.2v117h-12.2zm89.3-56.9v40.1c0 4.1 10.1 4.9 10.1 4.9l-.6 10.8c-8.6 0-15.7.7-20-3.4a71.68 71.68 0 0 1-29.3 6.1c-7.5 0-13.2-2.1-17.1-6.4s-5.9-10.3-5.9-18.3 2-13.8 6-17.5 10.3-6.1 18.9-6.9l25.6-2.4v-7c0-5.5-1.2-9.5-3.6-11.9s-5.7-3.6-9.8-3.6h-32.1V92.5h31.3c9.2 0 15.9 2.1 20.1 6.4s6.4 10.9 6.4 19.9zM394.7 152c0 10 4.1 15 12.4 15a65.27 65.27 0 0 0 21.8-3.7l3.7-1.3v-26.9l-24.1 2.3c-4.9.4-8.4 1.8-10.6 4.2s-3.2 5.9-3.2 10.4zm97.9-48.6c-11.8 0-17.8 4.1-17.8 12.4 0 3.8 1.4 6.5 4.1 8.1s8.9 3.2 18.6 4.9 16.5 4 20.5 7.1 6 8.7 6 17.1-2.7 14.5-8.1 18.4-13.2 5.9-23.6 5.9c-6.7 0-29.2-2.5-29.2-2.5l.7-10.6c12.9 1.2 22.3 2.2 28.6 2.2s11.1-1 14.4-3 5-5.4 5-10.1-1.4-7.9-4.2-9.6-9-3.3-18.6-4.8-16.4-3.7-20.4-6.7-6-8.4-6-16.3 2.8-13.8 8.4-17.6 12.6-5.7 20.9-5.7c6.6 0 29.6 1.7 29.6 1.7V105c-12.1-.7-22-1.6-28.9-1.6zm90.4 1.4h-25.9v39c0 9.3.7 15.5 2 18.4s4.6 4.4 9.7 4.4l14.5-1 .8 10.1a111.1 111.1 0 0 1-16.6 1.8c-8.5 0-14.3-2.1-17.6-6.2s-4.9-12-4.9-23.6v-42.9h-11.6V94.2H545v-25h12.1v24.9H583v10.7zm17-29.1V61.6h12.2v14.2zm0 100V94.2h12.2v81.5H600zm65.2-83.2c3.6 0 9.7.7 18.3 2l3.9.5-.5 9.9a187.31 187.31 0 0 0-19.2-1.5c-9.2 0-15.5 2.2-18.8 6.6s-5 12.6-5 24.5 1.5 20.2 4.6 24.9 9.5 7 19.3 7l19.2-1.5.5 10.1c-10.1 1.5-17.7 2.3-22.7 2.3-12.7 0-21.5-3.3-26.3-9.8s-7.3-17.5-7.3-33 2.6-26.4 7.8-32.6 14-9.4 26.2-9.4z"/></svg>
+  </div>
+
+</div>
+<script src="/js/fuckslides.js"></script>
+<script>
+(function() {
+  // Commit grid: 4 rows × 10 cols of small squares
+  var g = document.getElementById('commit-grid');
+  var cols = 10, rows = 4, size = 13, gap = 3, xStart = 162, yStart = 5;
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', xStart + c * (size + gap));
+      rect.setAttribute('y', yStart + r * (size + gap));
+      rect.setAttribute('width', size);
+      rect.setAttribute('height', size);
+      rect.setAttribute('rx', '2');
+      rect.setAttribute('fill', '#1D55E0');
+      rect.setAttribute('opacity', (0.75 - c * 0.04 - r * 0.02).toFixed(2));
+      g.appendChild(rect);
+    }
+  }
+
+  // Env grid: 3 rows × 5 cols of environment boxes
+  var eg = document.getElementById('env-grid');
+  var ecols = 5, erows = 3, ew = 32, eh = 24, egap = 5, exStart = 100, eyStart = 20;
+  var labels = ['stg-1','stg-2','stg-3','stg-4','stg-5','stg-6','stg-7','stg-8','stg-9','stg-10','stg-11','stg-12','stg-13','stg-14','stg-15'];
+  var opacities = [0.85,0.8,0.75,0.7,0.65, 0.6,0.55,0.5,0.45,0.4, 0.35,0.3,0.25,0.2,0.15];
+  for (var r2 = 0; r2 < erows; r2++) {
+    for (var c2 = 0; c2 < ecols; c2++) {
+      var i = r2 * ecols + c2;
+      var x = exStart + c2 * (ew + egap);
+      var y = eyStart + r2 * (eh + egap);
+      var rect2 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect2.setAttribute('x', x); rect2.setAttribute('y', y);
+      rect2.setAttribute('width', ew); rect2.setAttribute('height', eh);
+      rect2.setAttribute('rx', '4');
+      rect2.setAttribute('fill', 'rgba(27,155,117,' + (0.06 + opacities[i] * 0.08) + ')');
+      rect2.setAttribute('stroke', '#1B9B75');
+      rect2.setAttribute('stroke-width', '1.2');
+      rect2.setAttribute('opacity', opacities[i]);
+      eg.appendChild(rect2);
+      var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      txt.setAttribute('x', x + ew / 2); txt.setAttribute('y', y + eh / 2 + 3);
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('font-size', '6'); txt.setAttribute('fill', '#1B9B75');
+      txt.setAttribute('font-family', 'JetBrains Mono,monospace');
+      txt.setAttribute('font-weight', '600');
+      txt.textContent = labels[i];
+      eg.appendChild(txt);
+    }
+  }
+})();
+</script>
+</body>
+</html>

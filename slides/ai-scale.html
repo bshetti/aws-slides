@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Two gaps AI-scale observability can't afford</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #fff; color: #0D0D0D;
+    }
+
+    @keyframes fade-up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+    @keyframes fill-bar { from { width: 0; } to { width: var(--w); } }
+    @keyframes draw-line { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+
+    .slide {
+      width: 1280px; height: 720px;
+      display: flex; flex-direction: column;
+      padding: 36px 66px 20px;
+    }
+
+    /* ── Header ── */
+    .eyebrow {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: #9AA5B8;
+      opacity: 0; animation: fade-in 0.4s ease forwards;
+    }
+    .headline {
+      font-size: 42px; font-weight: 300;
+      letter-spacing: -0.03em; line-height: 1.08;
+      color: #0D0D0D; margin-top: 5px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.1s;
+    }
+    .headline strong { font-weight: 900; }
+    .headline .blue { color: #1D55E0; }
+    .headline .orange { color: #E87A1D; }
+    .subhead {
+      font-size: 15px; font-weight: 400; color: #7A8499;
+      margin-top: 6px; line-height: 1.4;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+    }
+
+    /* ── Body ── */
+    .body {
+      flex: 1; min-height: 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+      margin-top: 22px;
+    }
+
+    /* ── Problem cards ── */
+    .prob-card {
+      border-radius: 16px; padding: 24px 26px;
+      display: flex; flex-direction: column; gap: 14px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      opacity: 0;
+    }
+    .prob-card-1 {
+      --card-bg: rgba(29, 85, 224, 0.04);
+      --card-border: rgba(29, 85, 224, 0.18);
+      --accent: #1D55E0;
+      animation: fade-up 0.55s ease forwards 0.35s;
+    }
+    .prob-card-2 {
+      --card-bg: rgba(232, 122, 29, 0.04);
+      --card-border: rgba(232, 122, 29, 0.18);
+      --accent: #E87A1D;
+      animation: fade-up 0.55s ease forwards 0.5s;
+    }
+
+    .card-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--accent); opacity: 0.8;
+    }
+
+    .card-top { display: flex; align-items: flex-end; gap: 14px; }
+    .card-stat {
+      font-size: 72px; font-weight: 900; line-height: 1;
+      letter-spacing: -0.04em; color: var(--accent);
+    }
+    .card-stat-sub {
+      font-size: 17px; font-weight: 600; color: #7A8499;
+      line-height: 1.35; padding-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 16px; font-weight: 700; color: #1A1F36; line-height: 1.3;
+    }
+
+    /* ── Retention visual ── */
+    .retention-visual {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .ret-label {
+      font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #9AA5B8;
+    }
+    .ret-blocks {
+      display: flex; gap: 3px; align-items: center;
+    }
+    .ret-block {
+      height: 22px; border-radius: 3px; flex: 1;
+    }
+    .ret-block.kept { background: #1D55E0; opacity: 0.75; }
+    .ret-block.dropped { background: #DDE1EE; }
+    .ret-annotation {
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: #9AA5B8; font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Scale chart ── */
+    .scale-chart { position: relative; }
+
+    /* ── Bullets ── */
+    .card-bullets { display: flex; flex-direction: column; gap: 7px; }
+    .card-bullet {
+      display: flex; gap: 9px; align-items: flex-start;
+      font-size: 12px; color: #4A5068; line-height: 1.45;
+    }
+    .card-bullet::before {
+      content: ''; flex-shrink: 0;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--accent); opacity: 0.55;
+      margin-top: 0.5em;
+    }
+    .card-bullet strong { color: #1A1F36; font-weight: 700; }
+
+    /* ── Bridge strip ── */
+    .bridge-strip {
+      margin-top: 18px; flex-shrink: 0;
+      background: #0D0D0D; border-radius: 12px;
+      padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.75s;
+    }
+    .bridge-text {
+      font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.75);
+      line-height: 1.45; flex: 1;
+    }
+    .bridge-text strong { color: #fff; font-weight: 700; }
+    .bridge-arrow {
+      font-size: 22px; font-weight: 900; color: #1D55E0;
+      flex-shrink: 0; letter-spacing: -0.02em;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      display: flex; justify-content: flex-end; align-items: center;
+      padding-top: 10px; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="eyebrow">The AI Era · Two Unsolved Problems</div>
+  <div class="headline"><strong class="blue">Context.</strong> <strong class="orange">Scale.</strong> Two gaps that compound each other.</div>
+  <div class="subhead">AI-generated incidents demand complete data and autonomous response. You need both.</div>
+
+  <div class="body">
+
+    <!-- Card 1: Context Gap -->
+    <div class="prob-card prob-card-1">
+      <div class="card-label">01 · The Context Gap</div>
+      <div class="card-top">
+        <div class="card-stat">60%</div>
+        <div class="card-stat-sub">of telemetry dropped<br>to control cost</div>
+      </div>
+      <div class="card-title">Dropped data is context your AI can never recover.</div>
+
+      <div class="retention-visual">
+        <div class="ret-label">Retention window · 30 days</div>
+        <div class="ret-blocks" id="ret-blocks"></div>
+        <div class="ret-annotation">
+          <span>← retained</span>
+          <span>dropped →</span>
+        </div>
+      </div>
+
+      <div class="card-bullets">
+        <div class="card-bullet"><span>Every rotated log is a root cause your agent <strong>can't trace</strong></span></div>
+        <div class="card-bullet"><span>Truncated metrics mean <strong>incomplete baselines</strong> for anomaly detection</span></div>
+        <div class="card-bullet"><span>Storage cost forces the tradeoffs that <strong>break AI reasoning</strong></span></div>
+      </div>
+    </div>
+
+    <!-- Card 2: Scale Gap -->
+    <div class="prob-card prob-card-2">
+      <div class="card-label">02 · The Scale Gap</div>
+      <div class="card-top">
+        <div class="card-stat">∞</div>
+        <div class="card-stat-sub">incidents generated<br>faster than humans triage</div>
+      </div>
+      <div class="card-title">Incident volume now tracks AI deployment frequency.</div>
+
+      <div class="scale-chart">
+        <svg viewBox="0 0 440 90" width="100%" style="overflow:visible">
+          <defs>
+            <linearGradient id="grad-inc" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#E87A1D" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#E87A1D" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- grid -->
+          <line x1="0" y1="80" x2="440" y2="80" stroke="#EEF2F8" stroke-width="1"/>
+          <line x1="0" y1="55" x2="440" y2="55" stroke="#EEF2F8" stroke-width="1"/>
+          <line x1="0" y1="30" x2="440" y2="30" stroke="#EEF2F8" stroke-width="1"/>
+          <!-- human capacity: flat -->
+          <path d="M0,62 L440,60" fill="none" stroke="#9AA5B8" stroke-width="1.5" stroke-dasharray="5 3"
+            style="stroke-dashoffset:400;animation:draw-line 0.8s ease forwards 0.9s"/>
+          <!-- incident volume: flat until 2024, then steep -->
+          <path d="M0,76 Q100,75 220,73 Q310,18 440,2 L440,80 L0,80Z" fill="url(#grad-inc)"/>
+          <path d="M0,76 Q100,75 220,73 Q310,18 440,2" fill="none" stroke="#E87A1D" stroke-width="2"
+            style="stroke-dashoffset:500;stroke-dasharray:500;animation:draw-line 1s ease forwards 0.65s"/>
+          <!-- AI inflection marker -->
+          <line x1="220" y1="5" x2="220" y2="80" stroke="rgba(232,122,29,0.35)" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="224" y="14" font-size="8" fill="#E87A1D" font-weight="700" font-family="Inter,sans-serif">AI agents · Q1 '24</text>
+          <!-- labels -->
+          <text x="448" y="6"  font-size="9" fill="#E87A1D" font-weight="700" font-family="Inter,sans-serif">Incidents</text>
+          <text x="448" y="63" font-size="9" fill="#9AA5B8" font-family="Inter,sans-serif">Human capacity</text>
+          <!-- gap annotation -->
+          <line x1="390" y1="8" x2="390" y2="60" stroke="rgba(232,122,29,0.4)" stroke-width="1" stroke-dasharray="2 2"/>
+          <text x="394" y="37" font-size="8.5" fill="#E87A1D" font-family="Inter,sans-serif">gap</text>
+          <!-- x labels -->
+          <text x="0"   y="90" font-size="8" fill="#9AA5B8" font-family="JetBrains Mono,monospace">2022</text>
+          <text x="200" y="90" font-size="8" fill="#9AA5B8" font-family="JetBrains Mono,monospace">2024</text>
+          <text x="405" y="90" font-size="8" fill="#9AA5B8" font-family="JetBrains Mono,monospace">now</text>
+        </svg>
+      </div>
+
+      <div class="card-bullets">
+        <div class="card-bullet"><span>AI agents ship code 24/7 — <strong>incidents follow the same cadence</strong></span></div>
+        <div class="card-bullet"><span>SREs paged for code they've <strong>never read, from agents they don't know</strong></span></div>
+        <div class="card-bullet"><span>Alert volume and MTTR grow together when <strong>triage is still human</strong></span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bridge -->
+  <div class="bridge-strip">
+    <div class="bridge-text">
+      The answer isn't cheaper storage <em>or</em> faster humans.
+      It's a system that <strong>keeps everything</strong> and an agent that <strong>never sleeps.</strong>
+    </div>
+    <div class="bridge-arrow">→</div>
+  </div>
+
+  <div class="footer">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 687.5 235.6" style="height:22px;width:auto;display:block"><title>elastic</title><path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/><path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/><path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/><path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/><path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/><path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/><path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/><path fill="#1a1a1a" d="M330.8 165.5l4.7-.5.3 9.6a240.62 240.62 0 0 1-31.8 2.6q-17.55 0-24.9-10.2c-4.9-6.8-7.3-17.4-7.3-31.7q0-42.9 34.1-42.9c11 0 19.2 3.1 24.6 9.2s8.1 15.8 8.1 28.9l-.7 9.3h-53.8c0 9 1.6 15.7 4.9 20s8.9 6.5 17 6.5a230 230 0 0 0 24.8-.8zm-4.4-35.3c0-10-1.6-17.1-4.8-21.2s-8.4-6.2-15.6-6.2-12.7 2.2-16.3 6.5-5.5 11.3-5.6 20.9h42.3zm29.2 45.5v-117h12.2v117h-12.2zm89.3-56.9v40.1c0 4.1 10.1 4.9 10.1 4.9l-.6 10.8c-8.6 0-15.7.7-20-3.4a71.68 71.68 0 0 1-29.3 6.1c-7.5 0-13.2-2.1-17.1-6.4s-5.9-10.3-5.9-18.3 2-13.8 6-17.5 10.3-6.1 18.9-6.9l25.6-2.4v-7c0-5.5-1.2-9.5-3.6-11.9s-5.7-3.6-9.8-3.6h-32.1V92.5h31.3c9.2 0 15.9 2.1 20.1 6.4s6.4 10.9 6.4 19.9zM394.7 152c0 10 4.1 15 12.4 15a65.27 65.27 0 0 0 21.8-3.7l3.7-1.3v-26.9l-24.1 2.3c-4.9.4-8.4 1.8-10.6 4.2s-3.2 5.9-3.2 10.4zm97.9-48.6c-11.8 0-17.8 4.1-17.8 12.4 0 3.8 1.4 6.5 4.1 8.1s8.9 3.2 18.6 4.9 16.5 4 20.5 7.1 6 8.7 6 17.1-2.7 14.5-8.1 18.4-13.2 5.9-23.6 5.9c-6.7 0-29.2-2.5-29.2-2.5l.7-10.6c12.9 1.2 22.3 2.2 28.6 2.2s11.1-1 14.4-3 5-5.4 5-10.1-1.4-7.9-4.2-9.6-9-3.3-18.6-4.8-16.4-3.7-20.4-6.7-6-8.4-6-16.3 2.8-13.8 8.4-17.6 12.6-5.7 20.9-5.7c6.6 0 29.6 1.7 29.6 1.7V105c-12.1-.7-22-1.6-28.9-1.6zm90.4 1.4h-25.9v39c0 9.3.7 15.5 2 18.4s4.6 4.4 9.7 4.4l14.5-1 .8 10.1a111.1 111.1 0 0 1-16.6 1.8c-8.5 0-14.3-2.1-17.6-6.2s-4.9-12-4.9-23.6v-42.9h-11.6V94.2H545v-25h12.1v24.9H583v10.7zm17-29.1V61.6h12.2v14.2zm0 100V94.2h12.2v81.5H600zm65.2-83.2c3.6 0 9.7.7 18.3 2l3.9.5-.5 9.9a187.31 187.31 0 0 0-19.2-1.5c-9.2 0-15.5 2.2-18.8 6.6s-5 12.6-5 24.5 1.5 20.2 4.6 24.9 9.5 7 19.3 7l19.2-1.5.5 10.1c-10.1 1.5-17.7 2.3-22.7 2.3-12.7 0-21.5-3.3-26.3-9.8s-7.3-17.5-7.3-33 2.6-26.4 7.8-32.6 14-9.4 26.2-9.4z"/></svg>
+  </div>
+
+</div>
+<script src="/js/fuckslides.js"></script>
+<script>
+(function() {
+  // Build retention blocks: 20 blocks, first 8 retained, rest dropped
+  var container = document.getElementById('ret-blocks');
+  var TOTAL = 20, KEPT = 8;
+  for (var i = 0; i < TOTAL; i++) {
+    var b = document.createElement('div');
+    b.className = 'ret-block ' + (i < KEPT ? 'kept' : 'dropped');
+    container.appendChild(b);
+  }
+})();
+</script>
+</body>
+</html>

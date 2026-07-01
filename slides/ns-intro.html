@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nightshift</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px;
+      overflow: hidden;
+      background: #020810;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #wave-canvas {
+      position: fixed; inset: 0;
+      width: 1280px; height: 720px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.6s ease;
+    }
+
+    .inner {
+      position: relative; z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      user-select: none;
+    }
+
+    .dot {
+      width: 28px; height: 28px;
+      opacity: 0;
+      animation: dot-appear 0.85s cubic-bezier(0.2,0,0.2,1) forwards 0.3s;
+    }
+    @keyframes dot-appear {
+      0%   { opacity: 0; transform: translateY(28px) scale(0.5); filter: drop-shadow(0 0 0px rgba(56,189,248,0)); }
+      65%  { opacity: 1; transform: translateY(-4px) scale(1.15); filter: drop-shadow(0 0 10px rgba(56,189,248,0.75)); }
+      100% { opacity: 0.9; transform: translateY(0) scale(1);    filter: drop-shadow(0 0 5px rgba(56,189,248,0.45)); }
+    }
+
+    .word {
+      display: flex;
+      gap: 0.08em;
+      letter-spacing: 0.25em;
+    }
+    .letter {
+      display: inline-block;
+      min-width: 0.72em;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 60px;
+      font-weight: 500;
+      color: #38BDF8;
+      opacity: 0;
+      text-align: center;
+      transition: text-shadow 0.4s ease, color 0.15s ease;
+    }
+    .letter.scrambling {
+      opacity: 1;
+      color: #1E3A5F;
+      text-shadow: none;
+    }
+    .letter.locked {
+      opacity: 1;
+      color: #38BDF8;
+      text-shadow: 0 0 18px rgba(56,189,248,0.55), 0 0 40px rgba(56,189,248,0.18);
+    }
+    .word.all-locked .letter {
+      text-shadow: 0 0 28px rgba(56,189,248,0.8), 0 0 60px rgba(56,189,248,0.3);
+      transition: text-shadow 0.25s ease;
+    }
+
+
+    .scanline {
+      position: fixed; inset: 0; pointer-events: none;
+      background: linear-gradient(to bottom, transparent 0%, rgba(56,189,248,0.04) 50%, transparent 100%);
+      background-size: 100% 200%;
+      animation: scan 2.8s linear forwards 0.4s;
+      opacity: 0;
+    }
+    @keyframes scan {
+      0%   { opacity: 1; background-position: 0 -100%; }
+      100% { opacity: 0; background-position: 0 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="wave-canvas" width="1280" height="720"></canvas>
+
+  <div class="inner">
+    <div class="dot">
+      <svg width="28" height="28" viewBox="30 215 220 220" xmlns="http://www.w3.org/2000/svg">
+        <path d="m101.9 306.9 45.2 20.6 45.6-40c.7-3.3 1-6.5 1-10 0-28.1-22.9-51-51-51-16.8 0-32.5 8.3-42 22.2l-7.6 39.3z" fill="#38BDF8"/>
+        <path d="m55.1 354.7c-.7 3.3-1 6.7-1 10.2 0 28.2 23 51.1 51.1 51.1 16.9 0 32.7-8.4 42.2-22.3l7.5-39.2-10-19.2-45.4-20.7z" fill="#38BDF8"/>
+        <path d="m54.9 276.5 31 7.3 6.8-35.2c-4.2-3.2-9.4-5-14.8-5-13.4 0-24.4 10.9-24.4 24.4-.1 3 .4 5.9 1.4 8.5" fill="#38BDF8"/>
+        <path d="m52.2 283.9c-13.8 4.5-23.5 17.8-23.5 32.4 0 14.2 8.8 26.9 22 31.9l43.4-39.2-7.9-17z" fill="#38BDF8"/>
+        <path d="m155.4 393.6c4.3 3.2 9.4 5.1 14.7 5.1 13.4 0 24.4-10.9 24.4-24.4 0-3-.5-5.8-1.5-8.5l-30.9-7.2z" fill="#38BDF8"/>
+        <path d="m161.7 350.4 34 7.9c13.9-4.5 23.5-17.8 23.5-32.5 0-14.1-8.8-26.9-22-31.9l-44.5 39z" fill="#38BDF8"/>
+      </svg>
+    </div>
+    <div class="word" id="word">
+      <span class="letter" data-char="N">N</span>
+      <span class="letter" data-char="I">I</span>
+      <span class="letter" data-char="G">G</span>
+      <span class="letter" data-char="H">H</span>
+      <span class="letter" data-char="T">T</span>
+      <span class="letter" data-char="S">S</span>
+      <span class="letter" data-char="H">H</span>
+      <span class="letter" data-char="I">I</span>
+      <span class="letter" data-char="F">F</span>
+      <span class="letter" data-char="T">T</span>
+    </div>
+  </div>
+
+  <div class="scanline"></div>
+
+  <script>
+  (function () {
+    /* ─────────────────────────────────────────────
+       NIGHTSHIFT letter scramble + ambient glitch
+    ───────────────────────────────────────────── */
+    var word        = document.getElementById('word');
+    var letters     = word.querySelectorAll('.letter');
+    var CHARS       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#!@%?';
+    var glitchTimer = null;
+
+    function startGlitchLoop() {
+      function glitchOnce() {
+        var count   = Math.random() < 0.65 ? 1 : 2;
+        var indices = [];
+        while (indices.length < count) {
+          var i = Math.floor(Math.random() * letters.length);
+          if (indices.indexOf(i) === -1) indices.push(i);
+        }
+        indices.forEach(function (i) {
+          var el      = letters[i];
+          var target  = el.dataset.char;
+          var totalMs = 55 + Math.random() * 110;
+          var frameMs = 28;
+          var elapsed = 0;
+          el.classList.remove('locked');
+          el.classList.add('scrambling');
+          var iv = setInterval(function () {
+            elapsed += frameMs;
+            if (elapsed >= totalMs) {
+              clearInterval(iv);
+              el.textContent = target;
+              el.classList.remove('scrambling');
+              el.classList.add('locked');
+            } else {
+              el.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+            }
+          }, frameMs);
+        });
+        glitchTimer = setTimeout(glitchOnce, 100 + Math.random() * 520);
+      }
+      glitchTimer = setTimeout(glitchOnce, 550);
+    }
+
+    function scrambleLetter(el, delay) {
+      var target   = el.dataset.char;
+      var SCRAMBLE = 380;
+      var FRAME    = 38;
+      setTimeout(function () {
+        el.classList.add('scrambling');
+        var elapsed = 0;
+        var iv = setInterval(function () {
+          elapsed += FRAME;
+          if (elapsed >= SCRAMBLE) {
+            clearInterval(iv);
+            el.textContent = target;
+            el.classList.remove('scrambling');
+            el.classList.add('locked');
+          } else {
+            var progress = elapsed / SCRAMBLE;
+            el.textContent = Math.random() < progress * 0.6
+              ? target
+              : CHARS[Math.floor(Math.random() * CHARS.length)];
+          }
+        }, FRAME);
+      }, delay);
+    }
+
+    var STAGGER     = 115;
+    var START       = 1350;
+    var REVEAL_DONE = START + (letters.length - 1) * STAGGER + 380 + 320; // ~2555 ms
+
+    letters.forEach(function (el, i) { scrambleLetter(el, START + i * STAGGER); });
+
+    setTimeout(function () {
+      word.classList.add('all-locked');
+      startGlitchLoop();
+    }, REVEAL_DONE);
+
+
+    /* ─────────────────────────────────────────────
+       NUMBER FIELD  +  TRAVELING WAVE  +  SHOCKWAVE
+    ───────────────────────────────────────────── */
+    var canvas  = document.getElementById('wave-canvas');
+    var ctx     = canvas.getContext('2d');
+    var W = 1280, H = 720;
+
+    /* Grid of digits */
+    var CW   = 16, CH = 20;
+    var COLS = Math.ceil(W / CW);   // 80
+    var ROWS = Math.ceil(H / CH);   // 36
+    var grid = [];
+    for (var r = 0; r < ROWS; r++) {
+      grid[r] = [];
+      for (var c = 0; c < COLS; c++) {
+        grid[r][c] = (Math.random() * 10 | 0).toString();
+      }
+    }
+
+    /* Horizontal traveling wave (background glow) */
+    var FUND_AMP = 55,  HARM_AMP = 22;
+    var WAVE_LEN = 1040;
+    var T_SPEED  = 0.00036;   // rad / ms
+    var CENTER_Y = H * 0.50;
+    var BASE_A   = 0.026,  PEAK_A = 0.44,  SIGMA = 70;
+    var INV_2S2  = 1 / (2 * SIGMA * SIGMA);
+
+    /* Shockwave state */
+    var shock = null;
+
+    function getShockOrigin() {
+      var dotEl = document.querySelector('.dot');
+      if (!dotEl) return { x: W / 2, y: H / 2 };
+      var rect = dotEl.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+
+    function pulseEpicenter() {
+      var svgEl = document.querySelector('.dot svg');
+      if (!svgEl) return;
+      svgEl.animate([
+        { transform: 'scale(1)',    filter: 'drop-shadow(0 0 4px rgba(56,189,248,0.5))' },
+        { transform: 'scale(1.28)', filter: 'drop-shadow(0 0 18px rgba(56,189,248,1)) drop-shadow(0 0 40px rgba(56,189,248,0.5))' },
+        { transform: 'scale(1)',    filter: 'drop-shadow(0 0 4px rgba(56,189,248,0.45))' }
+      ], { duration: 700, easing: 'cubic-bezier(0.2,0,0.3,1)', fill: 'none' });
+    }
+
+    function launchShock() {
+      var o = getShockOrigin();
+      shock = {
+        ox: o.x, oy: o.y,
+        r:  0,
+        speed: 148,
+        k:    0.145,
+        sig:  46,
+        amp:  6.5,
+        dead: false
+      };
+      pulseEpicenter();
+    }
+
+    /* First shock fires the moment NIGHTSHIFT finishes revealing, then every 7 s */
+    setTimeout(function () {
+      launchShock();
+      setInterval(launchShock, 7000);
+    }, REVEAL_DONE);
+
+    /* Fade canvas in when NIGHTSHIFT is done */
+    setTimeout(function () {
+      canvas.style.opacity = '1';
+    }, REVEAL_DONE);
+
+    /* Animation loop */
+    var phase = 0, prev = null;
+    ctx.font         = '9px "JetBrains Mono", monospace';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+
+    function draw(ts) {
+      if (!prev) prev = ts;
+      var dt  = ts - prev;
+      prev    = ts;
+
+      phase += T_SPEED * dt;
+
+      /* Advance shockwave radius */
+      if (shock && !shock.dead) {
+        shock.r += shock.speed * (dt / 1000);
+        var corners = [[0,0],[W,0],[0,H],[W,H]];
+        var maxR = Math.max.apply(null, corners.map(function(p) {
+          var dx = p[0] - shock.ox, dy = p[1] - shock.oy;
+          return Math.sqrt(dx*dx + dy*dy);
+        }));
+        if (shock.r > maxR + shock.sig * 3) shock.dead = true;
+      }
+
+      var freq  = (2 * Math.PI) / WAVE_LEN;
+      var freq2 = freq * 2;
+
+      ctx.clearRect(0, 0, W, H);
+
+      for (var r = 0; r < ROWS; r++) {
+        var cy = r * CH + CH * 0.5;
+
+        for (var c = 0; c < COLS; c++) {
+          var cx = c * CW + CW * 0.5;
+
+          /* ── Horizontal wave brightness ── */
+          var waveY = CENTER_Y
+            + Math.sin(cx * freq  + phase)         * FUND_AMP
+            + Math.sin(cx * freq2 + phase * 2 + 1) * HARM_AMP;
+          var wDist = cy - waveY;
+          var alpha = BASE_A + PEAK_A * Math.exp(-(wDist * wDist) * INV_2S2);
+
+          /* ── Shockwave radial displacement ── */
+          var drawX = cx, drawY = cy;
+
+          if (shock && !shock.dead) {
+            var ddx  = cx - shock.ox;
+            var ddy  = cy - shock.oy;
+            var dist = Math.sqrt(ddx * ddx + ddy * ddy);
+
+            if (dist > 0.5) {
+              var rel      = dist - shock.r;
+              var inv2ss   = 1 / (2 * shock.sig * shock.sig);
+              var envelope = Math.exp(-(rel * rel) * inv2ss);
+              var disp     = shock.amp * Math.sin(rel * shock.k) * envelope;
+
+              /* Displace radially outward */
+              drawX = cx + disp * (ddx / dist);
+              drawY = cy + disp * (ddy / dist);
+
+              /* Slight extra brightness at the outward crest */
+              alpha += Math.max(0, disp) / shock.amp * 0.18;
+            }
+          }
+
+          alpha = Math.min(alpha, 0.88);
+          ctx.fillStyle = 'rgba(56,189,248,' + alpha.toFixed(3) + ')';
+          ctx.fillText(grid[r][c], drawX, drawY);
+        }
+      }
+
+      /* Flicker ~4 random cells per frame */
+      for (var f = 0; f < 4; f++) {
+        grid[Math.random() * ROWS | 0][Math.random() * COLS | 0] =
+          (Math.random() * 10 | 0).toString();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+  }());
+  </script>
+
+  <script src="/js/fuckslides.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+node_modules/
+*.pdf
+*.gif
+.DS_Store

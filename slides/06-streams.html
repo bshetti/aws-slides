@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streams: From raw data to immediate insights</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100vh;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #22242C;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes fade-up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+    @keyframes draw-line { to { stroke-dashoffset: 0; } }
+
+    /* ── Header ── */
+    .slide-header {
+      flex-shrink: 0;
+      padding: clamp(0.9rem, 1.3vw, 1.8rem) clamp(2rem, 3.5vw, 5rem);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: clamp(0.6rem, 1vw, 1.5rem);
+      opacity: 0;
+      animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow {
+      font-size: clamp(0.58rem, 0.7vw, 0.82rem);
+      font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.28); margin-bottom: 0.2rem;
+    }
+    .bar-title {
+      font-size: clamp(1.4rem, 2.2vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .bar-title em { font-style: normal; color: #00BFB3; }
+    .subline {
+      font-size: clamp(0.72rem, 0.95vw, 1.15rem);
+      color: rgba(255,255,255,0.32);
+      line-height: 1.4;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .subline em { font-style: normal; color: #00BFB3; font-weight: 600; }
+
+    /* ── Flow area ── */
+    .flow-area {
+      flex: 1;
+      position: relative;
+      display: flex;
+      min-height: 0;
+    }
+
+    #flow-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: visible;
+    }
+
+    /* ── Columns ── */
+    .col {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(1rem, 1.5vw, 2rem) clamp(0.8rem, 1.2vw, 1.8rem);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      gap: clamp(0.7rem, 1vw, 1.5rem);
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+    }
+    .col:last-child { border-right: none; }
+    /* svg#flow-svg is child 1, so .col elements are children 2–6 */
+    .col:nth-child(2) { animation: fade-in 0.4s ease forwards 0.10s; }
+    .col:nth-child(3) { animation: fade-in 0.4s ease forwards 0.25s; }
+    .col:nth-child(4) { animation: fade-in 0.4s ease forwards 0.40s; }
+    .col:nth-child(5) { animation: fade-in 0.4s ease forwards 0.55s; }
+    .col:nth-child(6) { animation: fade-in 0.4s ease forwards 0.70s; }
+
+    .col-label { display: flex; flex-direction: column; gap: 0.15rem; }
+    .col-title {
+      font-size: clamp(0.82rem, 1.05vw, 1.3rem);
+      font-weight: 800;
+      color: rgba(255,255,255,0.88);
+      letter-spacing: 0.01em;
+    }
+    .col-sub {
+      font-size: clamp(0.65rem, 0.78vw, 0.95rem);
+      color: rgba(255,255,255,0.26);
+      line-height: 1.35;
+    }
+
+    /* ── Source cards ── */
+    .source-cards {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(0.38rem, 0.55vw, 0.8rem);
+    }
+    .src-card {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.45rem, 0.65vw, 0.9rem);
+      padding: clamp(0.45rem, 0.65vw, 0.9rem) clamp(0.5rem, 0.75vw, 1rem);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      border-left: 3px solid var(--sc, rgba(255,255,255,0.2));
+    }
+    .src-icon {
+      width: clamp(22px, 1.9vw, 30px);
+      height: clamp(22px, 1.9vw, 30px);
+      flex-shrink: 0;
+    }
+    .src-text {}
+    .src-name {
+      font-size: clamp(0.8rem, 1vw, 1.2rem);
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.2;
+    }
+    .src-sub {
+      font-size: clamp(0.62rem, 0.72vw, 0.88rem);
+      color: rgba(255,255,255,0.26);
+      margin-top: 0.1rem;
+    }
+
+    /* ── Stream pills ── */
+    .stream-pills {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(0.5rem, 0.75vw, 1.1rem);
+    }
+    .str-pill {
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(1rem, 1.35vw, 1.85rem);
+      font-weight: 700;
+      border-radius: 10px;
+      padding: clamp(0.55em, 0.8vw, 0.85em) 1em;
+      text-align: center;
+      border-left: 4px solid var(--pc);
+      background: rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-right: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .str-pill.logs    { --pc: #7BA8FF; }
+    .str-pill.metrics { --pc: #00BFB3; }
+    .str-pill.traces  { --pc: #F4956A; }
+
+    /* ── Sub-stream groups ── */
+    .sub-groups {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(0.5rem, 0.75vw, 1.1rem);
+    }
+    .sub-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      padding: clamp(0.3rem, 0.45vw, 0.65rem) clamp(0.4rem, 0.6vw, 0.85rem);
+      border-left: 2px solid var(--gc);
+      background: rgba(255,255,255,0.02);
+      border-radius: 0 6px 6px 0;
+    }
+    .sub-group.g-logs    { --gc: rgba(123,168,255,0.35); }
+    .sub-group.g-metrics { --gc: rgba(0,191,179,0.35); }
+    .sub-group.g-traces  { --gc: rgba(244,149,106,0.35); }
+
+    .sub-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.65rem, 0.82vw, 1rem);
+      color: rgba(255,255,255,0.38);
+      line-height: 1.45;
+    }
+    .sub-path.root {
+      color: rgba(255,255,255,0.72);
+      font-weight: 600;
+      font-size: clamp(0.72rem, 0.9vw, 1.1rem);
+    }
+
+    /* ── Entity box ── */
+    .entity-box {
+      flex: 1;
+      border: 1px solid rgba(0,191,179,0.22);
+      border-radius: 12px;
+      background: rgba(0,191,179,0.04);
+      padding: clamp(0.65rem, 0.95vw, 1.4rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(0.5rem, 0.72vw, 1rem);
+    }
+    .ent-row { display: flex; flex-wrap: wrap; gap: 0.32rem; }
+    .ent-chip {
+      font-size: clamp(0.7rem, 0.85vw, 1.05rem);
+      font-weight: 700;
+      border-radius: 5px;
+      padding: 0.2em 0.55em;
+      background: var(--eb, rgba(255,255,255,0.06));
+      color: var(--ef, rgba(255,255,255,0.68));
+      border: 1px solid var(--el, rgba(255,255,255,0.1));
+    }
+    .ent-sep { height: 1px; background: rgba(255,255,255,0.06); }
+    .ent-note {
+      font-size: clamp(0.65rem, 0.78vw, 0.95rem);
+      color: rgba(0,191,179,0.55);
+      font-style: italic;
+      line-height: 1.4;
+    }
+
+    /* ── Events ── */
+    .event-box {
+      flex: 1;
+      border: 2px solid rgba(229,96,26,0.5);
+      border-radius: 16px;
+      background: rgba(34,36,44,0.7);
+      display: flex;
+      flex-direction: column;
+    }
+    .event-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.5rem, 0.7vw, 1rem);
+      padding: clamp(0.5rem, 0.8vw, 1.1rem) clamp(0.4rem, 0.6vw, 0.9rem);
+    }
+    .event-item + .event-item {
+      border-top: 1px solid rgba(255,255,255,0.09);
+    }
+    .ev-icon-wrap {
+      width: clamp(48px, 4.5vw, 68px);
+      height: clamp(48px, 4.5vw, 68px);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--ic-bg);
+      border: 1.5px solid var(--ic-border);
+    }
+    .ev-icon-wrap svg {
+      display: block;
+      width: 55%;
+      height: 55%;
+    }
+    .event-title {
+      font-size: clamp(0.85rem, 1.1vw, 1.4rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    /* ── Footer ── */
+    .footer-bar {
+      flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: clamp(0.55rem, 0.75vw, 1rem) clamp(2rem, 3.5vw, 5rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      animation: fade-in 0.4s ease forwards 0.85s;
+    }
+    .footer-caption {
+      font-size: clamp(0.72rem, 0.88vw, 1.05rem);
+      color: rgba(255,255,255,0.22);
+      font-style: italic;
+    }
+    .footer-badge {
+      font-size: clamp(0.68rem, 0.82vw, 1rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #00BFB3;
+      background: rgba(0,191,179,0.08);
+      border: 1px solid rgba(0,191,179,0.2);
+      border-radius: 5px;
+      padding: 0.25em 0.8em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="slide-header">
+    <div>
+      <div class="eyebrow">Elastic Observability · Streams</div>
+      <div class="bar-title"><em>Streams</em>: From raw data to immediate insights</div>
+    </div>
+    <p class="subline"><em>Always up-to-date</em> · real-time · <em>zero configuration</em></p>
+  </div>
+
+  <!-- Flow -->
+  <div class="flow-area">
+    <svg id="flow-svg"></svg>
+
+    <!-- Col 1: Data Collection -->
+    <div class="col">
+      <div class="col-label">
+        <div class="col-title">Data Collection</div>
+        <div class="col-sub">Any source, any format</div>
+      </div>
+      <div class="source-cards" id="src-box">
+
+        <!-- OpenTelemetry -->
+        <div class="src-card" id="src-otel" style="--sc:#7B4ECC">
+          <svg class="src-icon" viewBox="0 0 32 32" fill="none">
+            <polygon points="16,3 29,9.5 29,22.5 16,29 3,22.5 3,9.5" stroke="#7B4ECC" stroke-width="1.6" fill="rgba(123,78,204,0.12)"/>
+            <line x1="10" y1="16" x2="22" y2="16" stroke="#7B4ECC" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="16" y1="10" x2="16" y2="22" stroke="#7B4ECC" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="2.8" fill="#7B4ECC"/>
+          </svg>
+          <div class="src-text">
+            <div class="src-name">OpenTelemetry</div>
+            <div class="src-sub">OTLP · gRPC · HTTP</div>
+          </div>
+        </div>
+
+        <!-- Kinesis Firehose -->
+        <div class="src-card" id="src-fire" style="--sc:#FF9900">
+          <svg class="src-icon" viewBox="0 0 32 32" fill="none">
+            <rect x="3" y="3" width="26" height="26" rx="5" fill="rgba(255,153,0,0.12)" stroke="#FF9900" stroke-width="1.5"/>
+            <path d="M11 25c0-3 2-5 5-6s5-3 5-7" stroke="#FF9900" stroke-width="2" stroke-linecap="round"/>
+            <path d="M17 10l3 3-3 3" stroke="#FF9900" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="src-text">
+            <div class="src-name">Kinesis Firehose</div>
+            <div class="src-sub">AWS · streaming</div>
+          </div>
+        </div>
+
+        <!-- FluentD -->
+        <div class="src-card" id="src-fluent" style="--sc:#0E83CD">
+          <svg class="src-icon" viewBox="0 0 32 32" fill="none">
+            <path d="M16 3 L29 16 L16 29 L3 16 Z" stroke="#0E83CD" stroke-width="1.6" fill="rgba(14,131,205,0.12)"/>
+            <circle cx="16" cy="16" r="3" fill="#0E83CD"/>
+            <circle cx="16" cy="8.5" r="1.4" fill="rgba(14,131,205,0.55)"/>
+            <circle cx="16" cy="23.5" r="1.4" fill="rgba(14,131,205,0.55)"/>
+            <circle cx="8.5" cy="16" r="1.4" fill="rgba(14,131,205,0.55)"/>
+            <circle cx="23.5" cy="16" r="1.4" fill="rgba(14,131,205,0.55)"/>
+          </svg>
+          <div class="src-text">
+            <div class="src-name">FluentD / Bit</div>
+            <div class="src-sub">Logs · structured events</div>
+          </div>
+        </div>
+
+        <!-- Prometheus -->
+        <div class="src-card" id="src-prom" style="--sc:#E6522C">
+          <svg class="src-icon" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="12" stroke="#E6522C" stroke-width="1.6" fill="rgba(230,82,44,0.12)"/>
+            <path d="M10 25c1-2 2-4 3-5 2-2 5-3 6-5s1-4 0-6" stroke="#E6522C" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="2.5" fill="#E6522C"/>
+          </svg>
+          <div class="src-text">
+            <div class="src-name">Prometheus</div>
+            <div class="src-sub">Metrics · scrape · remote write</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Col 2: Top Level Streams -->
+    <div class="col">
+      <div class="col-label">
+        <div class="col-title">Top Level Streams</div>
+        <div class="col-sub">Central input destinations</div>
+      </div>
+      <div class="stream-pills">
+        <div class="str-pill logs"    id="pill-logs">/logs</div>
+        <div class="str-pill metrics" id="pill-metrics">/metrics</div>
+        <div class="str-pill traces"  id="pill-traces">/traces</div>
+      </div>
+    </div>
+
+    <!-- Col 3: Sub Streams -->
+    <div class="col">
+      <div class="col-label">
+        <div class="col-title">Sub Streams</div>
+        <div class="col-sub">Schema · lifecycle · access</div>
+      </div>
+      <div class="sub-groups">
+
+        <div class="sub-group g-logs" id="sub-grp-logs">
+          <div class="sub-path root" id="sub-l1">/logs/aws/eks</div>
+          <div class="sub-path" id="sub-l2">/logs/aws/eks/nginx</div>
+          <div class="sub-path" id="sub-l3">/logs/aws/eks/kafka</div>
+        </div>
+
+        <div class="sub-group g-metrics" id="sub-grp-metrics">
+          <div class="sub-path root" id="sub-m1">/metrics/k8s/nodes</div>
+          <div class="sub-path" id="sub-m2">/metrics/k8s/pods</div>
+        </div>
+
+        <div class="sub-group g-traces" id="sub-grp-traces">
+          <div class="sub-path root" id="sub-t1">/traces/services/api</div>
+          <div class="sub-path" id="sub-t2">/traces/services/db</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Col 4: KIs & Entities -->
+    <div class="col">
+      <div class="col-label">
+        <div class="col-title">KIs &amp; Entities</div>
+        <div class="col-sub">Auto-detected from telemetry</div>
+      </div>
+      <div class="entity-box" id="ent-box">
+        <div class="ent-row">
+          <span class="ent-chip" style="--eb:rgba(255,153,0,0.12);--ef:#FF9900;--el:rgba(255,153,0,0.3)">AWS</span>
+          <span class="ent-chip" style="--eb:rgba(66,133,244,0.12);--ef:#4285F4;--el:rgba(66,133,244,0.3)">GCP</span>
+          <span class="ent-chip" style="--eb:rgba(0,120,212,0.12);--ef:#5BA4F5;--el:rgba(0,120,212,0.3)">Azure</span>
+        </div>
+        <div class="ent-sep"></div>
+        <div class="ent-row">
+          <span class="ent-chip" style="--eb:rgba(50,108,229,0.12);--ef:#7BA8FF;--el:rgba(50,108,229,0.28)">k8s</span>
+          <span class="ent-chip" style="--eb:rgba(255,153,0,0.1);--ef:#FF9900;--el:rgba(255,153,0,0.25)">EKS</span>
+          <span class="ent-chip" style="--eb:rgba(66,133,244,0.1);--ef:#4285F4;--el:rgba(66,133,244,0.25)">GKE</span>
+          <span class="ent-chip" style="--eb:rgba(36,150,225,0.1);--ef:#2496ED;--el:rgba(36,150,225,0.25)">Docker</span>
+        </div>
+        <div class="ent-sep"></div>
+        <div class="ent-row">
+          <span class="ent-chip" style="--eb:rgba(0,150,57,0.1);--ef:#4CAF50;--el:rgba(0,150,57,0.25)">nginx</span>
+          <span class="ent-chip" style="--eb:rgba(100,180,120,0.1);--ef:#7DC98F;--el:rgba(100,180,120,0.25)">envoy</span>
+          <span class="ent-chip" style="--eb:rgba(180,100,60,0.1);--ef:#E8A87C;--el:rgba(180,100,60,0.25)">traefik</span>
+          <span class="ent-chip" style="--eb:rgba(50,150,220,0.1);--ef:#7BA8FF;--el:rgba(50,150,220,0.22)">istio</span>
+        </div>
+        <div class="ent-sep"></div>
+        <div class="ent-row">
+          <span class="ent-chip" style="--eb:rgba(50,100,200,0.1);--ef:#7BA8FF;--el:rgba(50,100,200,0.22)">postgres</span>
+          <span class="ent-chip" style="--eb:rgba(220,56,45,0.1);--ef:#EF6C60;--el:rgba(220,56,45,0.25)">redis</span>
+          <span class="ent-chip" style="--eb:rgba(71,162,72,0.1);--ef:#66BB6A;--el:rgba(71,162,72,0.25)">mongodb</span>
+          <span class="ent-chip" style="--eb:rgba(100,100,100,0.1);--ef:rgba(255,255,255,0.5);--el:rgba(100,100,100,0.2)">mysql</span>
+        </div>
+        <div class="ent-sep"></div>
+        <div class="ent-row">
+          <span class="ent-chip" style="--eb:rgba(200,60,60,0.1);--ef:#F47B7B;--el:rgba(200,60,60,0.22)">kafka</span>
+          <span class="ent-chip" style="--eb:rgba(255,102,0,0.1);--ef:#FF9966;--el:rgba(255,102,0,0.25)">rabbitmq</span>
+          <span class="ent-chip" style="--eb:rgba(0,191,179,0.1);--ef:#00BFB3;--el:rgba(0,191,179,0.25)">nats</span>
+          <span class="ent-chip" style="--eb:rgba(100,120,200,0.1);--ef:#9BA8E8;--el:rgba(100,120,200,0.22)">pulsar</span>
+        </div>
+        <div class="ent-sep"></div>
+        <div class="ent-row">
+          <span class="ent-chip" style="--eb:rgba(230,82,44,0.1);--ef:#F4956A;--el:rgba(230,82,44,0.25)">prometheus</span>
+          <span class="ent-chip" style="--eb:rgba(244,104,0,0.1);--ef:#F9A040;--el:rgba(244,104,0,0.25)">grafana</span>
+          <span class="ent-chip" style="--eb:rgba(202,33,113,0.1);--ef:#E06BA0;--el:rgba(202,33,113,0.25)">consul</span>
+        </div>
+        <div class="ent-sep"></div>
+        <div class="ent-note">Topology &amp; dependencies auto-mapped in real time</div>
+      </div>
+    </div>
+
+    <!-- Col 5: Significant Events -->
+    <div class="col">
+      <div class="col-label">
+        <div class="col-title">Significant Events</div>
+        <div class="col-sub">AI-powered insights</div>
+      </div>
+      <div class="event-box" id="evt-box">
+
+        <!-- Severe errors & crashes -->
+        <div class="event-item">
+          <div class="ev-icon-wrap" style="--ic-bg:rgba(244,67,54,0.18);--ic-border:rgba(244,67,54,0.5)">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="13" width="4" height="8"  rx="1" fill="#F44336"/>
+              <rect x="9" y="8"  width="4" height="13" rx="1" fill="#F44336"/>
+              <rect x="16" y="3" width="4" height="18" rx="1" fill="#F44336" opacity="0.6"/>
+              <path d="M16 3 L20 3 L22 0 L18 0 Z" fill="#F44336"/>
+              <circle cx="19" cy="0.8" r="0.8" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="event-title">Severe errors<br>&amp; crashes</div>
+        </div>
+
+        <!-- Version updates -->
+        <div class="event-item">
+          <div class="ev-icon-wrap" style="--ic-bg:rgba(255,152,0,0.18);--ic-border:rgba(255,152,0,0.5)">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C9 2 6 7 6 12l2 4h8l2-4C18 7 15 2 12 2Z" fill="#FF9800" opacity="0.9"/>
+              <circle cx="12" cy="11" r="2.5" fill="#fff" opacity="0.8"/>
+              <path d="M8 16L5 22l4-1.5Z" fill="#FF9800" opacity="0.7"/>
+              <path d="M16 16l3 6-4-1.5Z" fill="#FF9800" opacity="0.7"/>
+              <path d="M10 20q2 3 4 0" stroke="#FF9800" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="event-title">Version<br>updates</div>
+        </div>
+
+        <!-- Change in pattern distribution -->
+        <div class="event-item">
+          <div class="ev-icon-wrap" style="--ic-bg:rgba(254,209,10,0.15);--ic-border:rgba(254,209,10,0.5)">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="2,18 7,12 11,15 16,7 20,10" stroke="#FED10A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="17" cy="17" r="4.5" stroke="#FED10A" stroke-width="1.8" fill="rgba(254,209,10,0.15)"/>
+              <line x1="20.2" y1="20.2" x2="23" y2="23" stroke="#FED10A" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="16" cy="7" r="1.5" fill="#FED10A"/>
+            </svg>
+          </div>
+          <div class="event-title">Change in pattern<br>distribution</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-bar">
+    <span class="footer-caption">Generative AI extracts meaning from raw signals.</span>
+    <span class="footer-badge">→ Agent-ready</span>
+  </div>
+
+  <script>
+  function drawFlows() {
+    const svg = document.getElementById('flow-svg');
+    const base = svg.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${base.width} ${base.height}`);
+
+    function box(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        left:   r.left   - base.left,
+        right:  r.right  - base.left,
+        top:    r.top    - base.top,
+        bottom: r.bottom - base.top,
+        cy:     r.top    - base.top + r.height / 2,
+        cx:     r.left   - base.left + r.width / 2,
+      };
+    }
+
+    function arc(x1, y1, x2, y2, color, opacity, strokeW, delay) {
+      const cpx = (x1 + x2) / 2;
+      const d = `M${x1},${y1} C${cpx},${y1} ${cpx},${y2} ${x2},${y2}`;
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', d);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', color);
+      p.setAttribute('stroke-opacity', opacity);
+      p.setAttribute('stroke-width', strokeW);
+      p.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(p);
+      const len = p.getTotalLength();
+      p.setAttribute('stroke-dasharray', len);
+      p.setAttribute('stroke-dashoffset', len);
+      p.style.animation = `draw-line 0.5s ease forwards ${delay}s`;
+    }
+
+    const src    = box('src-box');
+    const logs   = box('pill-logs');
+    const met    = box('pill-metrics');
+    const trc    = box('pill-traces');
+    const grpL   = box('sub-grp-logs');
+    const grpM   = box('sub-grp-metrics');
+    const grpT   = box('sub-grp-traces');
+    const ent    = box('ent-box');
+    const evt    = box('evt-box');
+
+    if (!src || !logs || !met || !trc) return;
+
+    // 1. Source box → 3 stream pills (fan from src center)
+    arc(src.right, src.cy, logs.left, logs.cy, '#7BA8FF', 0.55, 1.8, 0.30);
+    arc(src.right, src.cy, met.left,  met.cy,  '#00BFB3', 0.55, 1.8, 0.38);
+    arc(src.right, src.cy, trc.left,  trc.cy,  '#F4956A', 0.55, 1.8, 0.46);
+
+    // 2. Each stream pill → its sub-group
+    if (grpL) arc(logs.right, logs.cy, grpL.left, grpL.cy, '#7BA8FF', 0.40, 1.4, 0.55);
+    if (grpM) arc(met.right,  met.cy,  grpM.left, grpM.cy, '#00BFB3', 0.40, 1.4, 0.60);
+    if (grpT) arc(trc.right,  trc.cy,  grpT.left, grpT.cy, '#F4956A', 0.40, 1.4, 0.65);
+
+    // 3. Three sub-groups converge → entity box
+    if (grpL && ent) arc(grpL.right, grpL.cy, ent.left, ent.cy, '#7BA8FF', 0.28, 1.2, 0.72);
+    if (grpM && ent) arc(grpM.right, grpM.cy, ent.left, ent.cy, '#00BFB3', 0.28, 1.2, 0.76);
+    if (grpT && ent) arc(grpT.right, grpT.cy, ent.left, ent.cy, '#F4956A', 0.28, 1.2, 0.80);
+
+    // 4. Entities → Significant Events (hero connection)
+    if (ent && evt) arc(ent.right, ent.cy, evt.left, evt.cy, '#E5601A', 0.75, 2.5, 0.92);
+  }
+
+  document.fonts.ready.then(() => {
+    requestAnimationFrame(() => requestAnimationFrame(drawFlows));
+  });
+
+  window.addEventListener('resize', () => {
+    const svg = document.getElementById('flow-svg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    requestAnimationFrame(drawFlows);
+  });
+  </script>
+
+<script src="js/main.js"></script>
+</body>
+</html>

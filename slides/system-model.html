@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live System Model</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #22242C;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #fff;
+      display: flex; flex-direction: column;
+    }
+
+    @keyframes fade-up { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none} }
+    @keyframes blink   { 0%,100%{opacity:1}50%{opacity:0.25} }
+    @keyframes pulse-border-red  { 0%,100%{border-color:rgba(224,82,82,0.42)}  50%{border-color:rgba(224,82,82,0.85)} }
+    @keyframes pulse-border-blue { 0%,100%{border-color:rgba(123,168,255,0.45)} 50%{border-color:rgba(123,168,255,0.9)} }
+
+    /* ── TOP BAR ── */
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding: 10px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .tl { display: flex; flex-direction: column; gap: 1px; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      align-self: flex-start; margin-bottom: 2px;
+      font-size: 8px; font-weight: 800;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: #4CAF50; background: rgba(76,175,80,0.12);
+      border: 1px solid rgba(76,175,80,0.3); border-radius: 4px;
+      padding: 2px 7px;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4CAF50; animation: blink 1.4s ease-in-out infinite; }
+    .bar-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+    .bar-title em { font-style: normal; color: #7BA8FF; }
+    .bar-sub { font-size: 9px; color: rgba(255,255,255,0.32); margin-top: 1px; }
+    .tr { display: flex; align-items: center; gap: 12px; }
+    .clock-tag { font-size: 8px; color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace; }
+    .ki-badge {
+      font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #7BA8FF; background: rgba(123,168,255,0.1); border: 1px solid rgba(123,168,255,0.28);
+      border-radius: 5px; padding: 3px 9px;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1; min-height: 0;
+      display: flex; gap: 14px;
+      padding: 10px 32px;
+    }
+
+    /* ── LEFT PANEL ── */
+    .left-panel {
+      flex: 0 0 206px;
+      display: flex; flex-direction: column; gap: 9px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+    }
+    .lp-intro { font-size: 10px; color: rgba(255,255,255,0.48); line-height: 1.65; }
+    .lp-intro strong { color: rgba(255,255,255,0.82); font-weight: 600; }
+    .lp-intro em { font-style: italic; color: #7BA8FF; }
+    .kp-stack { display: flex; flex-direction: column; gap: 7px; }
+    .kp {
+      padding: 7px 9px;
+      background: rgba(255,255,255,0.028); border-radius: 0 8px 8px 0;
+      border-left: 3px solid var(--c);
+    }
+    .kp-icon { font-size: 11px; margin-bottom: 3px; }
+    .kp-title { font-size: 9px; font-weight: 800; color: var(--c); margin-bottom: 2px; }
+    .kp-desc { font-size: 8px; color: rgba(255,255,255,0.36); line-height: 1.5; }
+    .learn-btn {
+      margin-top: auto;
+      padding: 5px 10px; font-size: 9px;
+      font-weight: 700; font-family: 'Inter', sans-serif;
+      color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 7px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ── GRAPH PANEL ── */
+    .graph-panel {
+      flex: 1; min-height: 0; min-width: 0;
+      background: rgba(255,255,255,0.018);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px; overflow: hidden;
+      display: flex; flex-direction: column;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.28s;
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 16px;
+      padding: 5px 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .fb-grp { display: flex; align-items: center; gap: 6px; font-size: 9px; color: rgba(255,255,255,0.38); }
+    .fb-dd {
+      color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      padding: 1px 7px; font-weight: 600; font-size: 9px;
+    }
+    .hl { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .hl-item { display: flex; align-items: center; gap: 4px; font-size: 8px; color: rgba(255,255,255,0.4); }
+    .hld { width: 7px; height: 7px; border-radius: 50%; }
+    .hld.g { background: #4CAF50; }
+    .hld.y { background: #FED10A; }
+    .hld.r { background: #E05252; }
+    .hld.gray { background: rgba(255,255,255,0.3); }
+    .tog-row { display: flex; align-items: center; gap: 6px; font-size: 8px; color: rgba(255,255,255,0.38); }
+    .tog { width: 26px; height: 14px; background: #2363F4; border-radius: 7px; position: relative; flex-shrink:0; }
+    .tog::after { content:''; position:absolute; width:10px; height:10px; background:#fff; border-radius:50%; top:2px; right:2px; }
+
+    /* ── GRAPH CANVAS ── */
+    .graph-canvas { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+
+    /* Lane backgrounds */
+    .lane {
+      position: absolute; top: 0; bottom: 0; width: 20%;
+      border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    .lane:last-child { border-right: none; }
+    .lane-hdr-row {
+      position: absolute; top: 0; left: 0; right: 0; height: 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; padding: 0 10px; gap: 6px;
+      background: rgba(255,255,255,0.02);
+    }
+    .lane-lbl { font-size: 7px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.28); }
+    .lane-badge {
+      font-size: 6px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 3px;
+    }
+    .lane-badge.imp { color: #FED10A; background: rgba(254,209,10,0.14); border: 1px solid rgba(254,209,10,0.38); }
+    .lane-badge.rc  { color: #fff; background: #c0392b; }
+
+    .conn-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+
+    /* ── NODE CARDS ── */
+    .node {
+      position: absolute;
+      width: 15.5%;
+      background: rgba(34,36,44,0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 9px;
+      display: flex; flex-direction: column; gap: 5px;
+      z-index: 3;
+      backdrop-filter: blur(8px);
+    }
+    .node.healthy  { border-color: rgba(76,175,80,0.25); }
+    .node.degraded { border-color: rgba(254,209,10,0.32); background: rgba(13,20,52,0.92); }
+    .node.critical { border-color: rgba(224,82,82,0.45); background: rgba(20,10,20,0.92); animation: pulse-border-red 2s ease-in-out infinite; }
+    .node.focus    { animation: pulse-border-blue 2.4s ease-in-out infinite; }
+    .node.critical.focus { animation: pulse-border-red 2s ease-in-out infinite, pulse-border-blue 2.4s ease-in-out infinite; }
+
+    .n-name { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9); font-family: 'JetBrains Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .n-status { display: flex; align-items: center; gap: 5px; font-size: 8px; font-weight: 600; }
+    .n-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink:0; }
+    .n-status.healthy .n-dot  { background: #4CAF50; }
+    .n-status.healthy .n-txt  { color: #4CAF50; }
+    .n-status.degraded .n-dot { background: #FED10A; }
+    .n-status.degraded .n-txt { color: #FED10A; }
+    .n-status.critical .n-dot { background: #E05252; animation: blink 1.1s ease-in-out infinite; }
+    .n-status.critical .n-txt { color: #E05252; }
+    .n-status.pressure .n-dot { background: #FFA06A; }
+    .n-status.pressure .n-txt { color: #FFA06A; }
+
+    .n-metrics { display: flex; gap: 7px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 5px; }
+    .nm { display: flex; flex-direction: column; gap: 1px; }
+    .nm-label { font-size: 6px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.28); }
+    .nm-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.82); }
+    .nm-val.bad  { color: #E05252; }
+    .nm-val.warn { color: #FED10A; }
+
+    .n-issue { font-size: 8px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+    .n-issue strong { color: rgba(224,82,82,0.9); }
+
+    /* ── REASONING STRIP ── */
+    .reasoning-strip {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px;
+      background: rgba(255,255,255,0.025);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.5s;
+    }
+    .strip-lbl {
+      font-size: 7px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); flex-shrink: 0;
+      padding-right: 9px; border-right: 1px solid rgba(255,255,255,0.09);
+    }
+    .steps { display: flex; align-items: center; gap: 5px; flex: 1; }
+    .step {
+      display: flex; flex-direction: column;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 7px 9px;
+      gap: 2px; min-width: 0;
+    }
+    .step-top { display: flex; align-items: center; gap: 5px; }
+    .step-n {
+      width: 15px; height: 15px;
+      border-radius: 50%; background: rgba(123,168,255,0.1); border: 1px solid rgba(123,168,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7px; font-weight: 800; color: #7BA8FF; flex-shrink: 0;
+    }
+    .step-name { font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.7); white-space: nowrap; }
+    .step-detail { font-size: 7px; color: rgba(255,255,255,0.32); line-height: 1.3; }
+    .step-arr { color: rgba(255,255,255,0.18); font-size: 9px; flex-shrink: 0; }
+    .rc-card {
+      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+      padding: 7px 14px;
+      background: rgba(224,82,82,0.1); border: 1px solid rgba(224,82,82,0.44);
+      border-radius: 8px; gap: 2px;
+    }
+    .rc-lbl { font-size: 7px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #E05252; }
+    .rc-name { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.88); font-family: 'JetBrains Mono', monospace; }
+    .rc-sub  { font-size: 7px; color: rgba(255,255,255,0.38); }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="tl">
+      <span class="live-badge"><span class="live-dot"></span>Live Model</span>
+      <div class="bar-title">The Agent's <em>Live System Model</em></div>
+      <div class="bar-sub">Built continuously from telemetry. Used to reason about incidents.</div>
+    </div>
+    <div class="tr">
+      <span class="clock-tag" id="live-clock">⟳ Auto-updated 5s ago</span>
+      <span class="ki-badge">KI-Driven · Always Live</span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Left concept panel -->
+    <div class="left-panel">
+      <p class="lp-intro">
+        During an incident, the agent navigates the <em>live model</em> to
+        <strong>understand impact</strong> and find the <strong>root cause.</strong>
+      </p>
+      <div class="kp-stack">
+        <div class="kp" style="--c:#00BFB3">
+          <div class="kp-icon">⊕</div>
+          <div class="kp-title">Live &amp; continuous</div>
+          <div class="kp-desc">Structure and health reflect real-time signals from your environment.</div>
+        </div>
+        <div class="kp" style="--c:#7BA8FF">
+          <div class="kp-icon">⟳</div>
+          <div class="kp-title">Agent reasoning</div>
+          <div class="kp-desc">The agent traverses dependencies to measure impact and isolate the root cause.</div>
+        </div>
+        <div class="kp" style="--c:#B27FFF">
+          <div class="kp-icon">◈</div>
+          <div class="kp-title">Knowledge indicators</div>
+          <div class="kp-desc">Signals and patterns are extracted from telemetry and attached to relevant parts of the model.</div>
+        </div>
+        <div class="kp" style="--c:#FFA06A">
+          <div class="kp-icon">⬡</div>
+          <div class="kp-title">No manual mapping</div>
+          <div class="kp-desc">Topology is discovered automatically from telemetry, deployments and runtime behavior.</div>
+        </div>
+        <div class="kp" style="--c:#4CAF50">
+          <div class="kp-icon">⚡</div>
+          <div class="kp-title">No instrumentation</div>
+          <div class="kp-desc">Zero code changes required. The model builds itself from existing telemetry signals.</div>
+        </div>
+      </div>
+      <button class="learn-btn">📖 Learn how it works</button>
+    </div>
+
+    <!-- Graph panel -->
+    <div class="graph-panel">
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="fb-grp">Group by: <span class="fb-dd">Layer ▾</span></div>
+        <div class="hl">
+          <div class="hl-item"><span class="hld g"></span> Healthy</div>
+          <div class="hl-item"><span class="hld y"></span> Degraded</div>
+          <div class="hl-item"><span class="hld r"></span> Critical</div>
+          <div class="hl-item"><span class="hld gray"></span> Unknown</div>
+        </div>
+        <div class="tog-row">Show traffic <div class="tog"></div></div>
+      </div>
+
+      <!-- Graph canvas -->
+      <div class="graph-canvas" id="gc">
+
+        <!-- Lane backgrounds -->
+        <div class="lane" style="left:0%">
+          <div class="lane-hdr-row"><span class="lane-lbl">Edge</span></div>
+        </div>
+        <div class="lane" style="left:20%">
+          <div class="lane-hdr-row"><span class="lane-lbl">API</span></div>
+        </div>
+        <div class="lane" style="left:40%">
+          <div class="lane-hdr-row">
+            <span class="lane-lbl">Services</span>
+            <span class="lane-badge imp">IMPACTED</span>
+          </div>
+        </div>
+        <div class="lane" style="left:60%">
+          <div class="lane-hdr-row">
+            <span class="lane-lbl">Data Stores</span>
+            <span class="lane-badge rc">ROOT CAUSE</span>
+          </div>
+        </div>
+        <div class="lane" style="left:80%">
+          <div class="lane-hdr-row"><span class="lane-lbl">Infrastructure</span></div>
+        </div>
+
+        <!-- SVG connections overlay -->
+        <svg class="conn-svg" id="conn-svg"></svg>
+
+        <!-- EDGE -->
+        <div class="node healthy" id="cn" data-col="0" data-row="0">
+          <div class="n-name">nginx-ingress</div>
+          <div class="n-status healthy"><span class="n-dot"></span><span class="n-txt">Healthy</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">240</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val">0.1%</span></div>
+          </div>
+        </div>
+
+        <!-- API -->
+        <div class="node healthy" id="cu" data-col="1" data-row="0">
+          <div class="n-name">user-api</div>
+          <div class="n-status healthy"><span class="n-dot"></span><span class="n-txt">Healthy</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">120</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val">0.2%</span></div>
+          </div>
+        </div>
+
+        <!-- SERVICES: checkout (degraded) -->
+        <div class="node degraded" id="cc" data-col="2" data-row="0">
+          <div class="n-name">checkout-service</div>
+          <div class="n-status degraded"><span class="n-dot"></span><span class="n-txt">Degraded</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">320</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val warn">2.1%</span></div>
+            <div class="nm"><span class="nm-label">P95</span><span class="nm-val warn">280ms</span></div>
+          </div>
+        </div>
+
+        <!-- DATA STORES: payment (critical + focus) -->
+        <div class="node critical focus" id="cp" data-col="3" data-row="0">
+          <div class="n-name">payment-service</div>
+          <div class="n-status critical"><span class="n-dot"></span><span class="n-txt">Critical</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">520</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val bad">4.1%</span></div>
+            <div class="nm"><span class="nm-label">P95</span><span class="nm-val bad">850ms</span></div>
+          </div>
+        </div>
+
+        <!-- INFRA -->
+        <div class="node degraded" id="ck" data-col="4" data-row="0">
+          <div class="n-name">k8s-node-03</div>
+          <div class="n-status pressure"><span class="n-dot"></span><span class="n-txt">Under pressure</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">CPU</span><span class="nm-val warn">91%</span></div>
+            <div class="nm"><span class="nm-label">Mem</span><span class="nm-val warn">85%</span></div>
+            <div class="nm"><span class="nm-label">Pods</span><span class="nm-val">23</span></div>
+          </div>
+        </div>
+
+        <!-- SERVICES: auth -->
+        <div class="node healthy" id="ca" data-col="2" data-row="1">
+          <div class="n-name">auth-service</div>
+          <div class="n-status healthy"><span class="n-dot"></span><span class="n-txt">Healthy</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">45</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val">0.0%</span></div>
+            <div class="nm"><span class="nm-label">P95</span><span class="nm-val">35ms</span></div>
+          </div>
+        </div>
+
+        <!-- DATA STORES: redis (ROOT CAUSE) -->
+        <div class="node critical" id="cr" data-col="3" data-row="1">
+          <div class="n-name">redis</div>
+          <div class="n-status critical"><span class="n-dot"></span><span class="n-txt">Critical · <strong style="color:#c0392b;font-size:0.9em">ROOT CAUSE</strong></span></div>
+          <div class="n-issue"><strong>Issue</strong> Connection pool exhausted</div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">Timeouts</span><span class="nm-val bad">↑500%</span></div>
+            <div class="nm"><span class="nm-label">P95</span><span class="nm-val bad">480ms</span></div>
+          </div>
+        </div>
+
+        <!-- SERVICES: order-db -->
+        <div class="node healthy" id="co" data-col="2" data-row="2">
+          <div class="n-name">order-db</div>
+          <div class="n-status healthy"><span class="n-dot"></span><span class="n-txt">Healthy</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">12</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val">0.0%</span></div>
+            <div class="nm"><span class="nm-label">P95</span><span class="nm-val">8ms</span></div>
+          </div>
+        </div>
+
+        <!-- DATA STORES: postgres -->
+        <div class="node healthy" id="cpg" data-col="3" data-row="2">
+          <div class="n-name">postgres</div>
+          <div class="n-status healthy"><span class="n-dot"></span><span class="n-txt">Healthy</span></div>
+          <div class="n-metrics">
+            <div class="nm"><span class="nm-label">RPS</span><span class="nm-val">10</span></div>
+            <div class="nm"><span class="nm-label">Errors</span><span class="nm-val">0.0%</span></div>
+            <div class="nm"><span class="nm-label">P95</span><span class="nm-val">12ms</span></div>
+          </div>
+        </div>
+
+      </div><!-- .graph-canvas -->
+
+      <!-- AGENT REASONING STRIP -->
+      <div class="reasoning-strip">
+        <span class="strip-lbl">Agent Reasoning Path</span>
+        <div class="steps">
+
+          <div class="step">
+            <div class="step-top"><div class="step-n">1</div><span class="step-name">Detected</span></div>
+            <div class="step-detail">Payment errors increasing</div>
+          </div>
+          <span class="step-arr">→</span>
+
+          <div class="step">
+            <div class="step-top"><div class="step-n">2</div><span class="step-name">Impact</span></div>
+            <div class="step-detail">checkout-service impacted</div>
+          </div>
+          <span class="step-arr">→</span>
+
+          <div class="step">
+            <div class="step-top"><div class="step-n">3</div><span class="step-name">Focus</span></div>
+            <div class="step-detail">payment-service high error rate</div>
+          </div>
+          <span class="step-arr">→</span>
+
+          <div class="step">
+            <div class="step-top"><div class="step-n">4</div><span class="step-name">Investigate</span></div>
+            <div class="step-detail">dependency redis latency high</div>
+          </div>
+          <span class="step-arr">→</span>
+
+          <div class="step">
+            <div class="step-top"><div class="step-n">5</div><span class="step-name">Root cause</span></div>
+            <div class="step-detail">redis connection pool exhausted</div>
+          </div>
+          <span class="step-arr" style="color:rgba(224,82,82,0.6)">→</span>
+
+          <div class="rc-card">
+            <div class="rc-lbl">Root Cause</div>
+            <div class="rc-name">Redis</div>
+            <div class="rc-sub">Connection pool exhausted</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- .graph-panel -->
+  </div><!-- .main -->
+
+<script>
+(function () {
+  // Live clock
+  let secs = 5;
+  const clockEl = document.getElementById('live-clock');
+  setInterval(() => {
+    secs = secs <= 1 ? 30 : secs - 1;
+    clockEl.textContent = secs <= 1 ? '⟳ Updating...' : `⟳ Auto-updated ${secs}s ago`;
+  }, 1000);
+
+  function layoutCards() {
+    const gc   = document.getElementById('gc');
+    const gcR  = gc.getBoundingClientRect();
+    const lhh  = gc.querySelector('.lane-hdr-row').offsetHeight;
+    const availH = gcR.height - lhh;
+    const colW   = gcR.width / 5;
+    const padX   = colW * 0.09;
+    const cardW  = colW - padX * 2;
+    const rowY   = [0.05, 0.37, 0.67];
+
+    document.querySelectorAll('.node').forEach(el => {
+      const col = parseInt(el.dataset.col);
+      const row = parseInt(el.dataset.row);
+      el.style.width = cardW + 'px';
+      el.style.left  = (col * colW + padX) + 'px';
+      el.style.top   = (lhh + availH * rowY[row]) + 'px';
+    });
+  }
+
+  function drawConnections() {
+    const gc  = document.getElementById('gc');
+    const svg = document.getElementById('conn-svg');
+    const gcR = gc.getBoundingClientRect();
+
+    function mid(id, side) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        x: (side==='r' ? r.right : side==='l' ? r.left : (r.left+r.right)/2) - gcR.left,
+        y: (side==='t' ? r.top   : side==='b' ? r.bottom : (r.top+r.bottom)/2) - gcR.top
+      };
+    }
+
+    function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+    svg.innerHTML = '<defs></defs>';
+    const defs = svg.querySelector('defs');
+
+    function mkArrow(id, color) {
+      const m = ns('marker');
+      m.setAttribute('id', id);
+      m.setAttribute('markerWidth', '8'); m.setAttribute('markerHeight', '6');
+      m.setAttribute('refX', '6'); m.setAttribute('refY', '3');
+      m.setAttribute('orient', 'auto');
+      const p = ns('path'); p.setAttribute('d', 'M0,0 L8,3 L0,6 Z'); p.setAttribute('fill', color);
+      m.appendChild(p); defs.appendChild(m);
+    }
+
+    mkArrow('aw',  'rgba(255,255,255,0.35)');
+    mkArrow('ay',  'rgba(254,209,10,0.85)');
+    mkArrow('ar',  '#E05252');
+    mkArrow('ao',  'rgba(255,140,0,0.6)');
+    mkArrow('awf', 'rgba(255,255,255,0.18)');
+
+    const conns = [
+      { f:'cn',  fs:'r', t:'cu',  ts:'l', c:'rgba(255,255,255,0.3)',  m:'aw',  lbl:'240 rps',      lc:'rgba(255,255,255,0.45)' },
+      { f:'cu',  fs:'r', t:'cc',  ts:'l', c:'rgba(255,255,255,0.25)', m:'aw',  lbl:'120 rps',      lc:'rgba(255,255,255,0.4)'  },
+      { f:'cu',  fs:'r', t:'ca',  ts:'l', c:'rgba(255,255,255,0.15)', m:'awf', lbl:null },
+      { f:'cu',  fs:'r', t:'co',  ts:'l', c:'rgba(255,255,255,0.1)',  m:'awf', lbl:null },
+      { f:'cc',  fs:'r', t:'cp',  ts:'l', c:'rgba(224,82,82,0.75)',   m:'ar',  lbl:'calls 520 rps', lc:'rgba(224,82,82,0.85)'  },
+      { f:'cp',  fs:'r', t:'ck',  ts:'l', c:'rgba(255,140,0,0.45)',   m:'ao',  lbl:'runs on',       lc:'rgba(255,140,0,0.6)',   dash:true },
+      { f:'cp',  fs:'b', t:'cr',  ts:'t', c:'#E05252',                m:'ar',  lbl:'depends on',    lc:'rgba(224,82,82,0.85)',  incident:true, vert:true },
+      { f:'co',  fs:'r', t:'cpg', ts:'l', c:'rgba(255,255,255,0.14)', m:'awf', lbl:null,            dash:true },
+    ];
+
+    conns.forEach(c => {
+      const from = mid(c.f, c.fs);
+      const to   = mid(c.t, c.ts);
+      if (!from || !to) return;
+
+      let d;
+      if (c.vert) {
+        const cy = (to.y - from.y) * 0.5;
+        d = `M${from.x},${from.y} C${from.x},${from.y+cy} ${to.x},${to.y-cy} ${to.x},${to.y}`;
+      } else {
+        const cx = (to.x - from.x) * 0.4;
+        d = `M${from.x},${from.y} C${from.x+cx},${from.y} ${to.x-cx},${to.y} ${to.x},${to.y}`;
+      }
+
+      const path = ns('path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', c.c);
+      path.setAttribute('stroke-width', c.incident ? '2' : '1.5');
+      path.setAttribute('marker-end', `url(#${c.m})`);
+      if (c.dash) path.setAttribute('stroke-dasharray', '6,4');
+      svg.appendChild(path);
+
+      if (c.incident) {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+        path.style.transition = 'stroke-dashoffset 1s ease 0.8s';
+        requestAnimationFrame(() => requestAnimationFrame(() => { path.style.strokeDashoffset = '0'; }));
+      }
+
+      if (c.lbl) {
+        const len = path.getTotalLength();
+        const mp  = path.getPointAtLength(len * 0.5);
+        const lw  = c.lbl.length * 4.4 + 10;
+        const bg  = ns('rect');
+        bg.setAttribute('x', mp.x - lw/2); bg.setAttribute('y', mp.y - 16);
+        bg.setAttribute('width', lw); bg.setAttribute('height', 12);
+        bg.setAttribute('rx', '3'); bg.setAttribute('fill', '#22242C'); bg.setAttribute('opacity', '0.85');
+        const txt = ns('text');
+        txt.setAttribute('x', mp.x); txt.setAttribute('y', mp.y - 7);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('fill', c.lc);
+        txt.setAttribute('font-size', '9');
+        txt.setAttribute('font-family', 'Inter, sans-serif');
+        txt.setAttribute('font-style', 'italic');
+        txt.setAttribute('font-weight', '600');
+        txt.textContent = c.lbl;
+        svg.appendChild(bg);
+        svg.appendChild(txt);
+      }
+    });
+  }
+
+  function layout() { layoutCards(); drawConnections(); }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(layout, 100);
+  });
+}());
+</script>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

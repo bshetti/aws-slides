@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three Layers. One Structural Advantage.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100vh;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #22242C;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Animations ── */
+    @keyframes fade-up  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+    @keyframes fade-in  { from { opacity:0; } to { opacity:1; } }
+
+    .slide-header   { animation: fade-up 0.45s ease forwards; }
+    .layer-3        { opacity:0; animation: fade-up 0.5s ease forwards 0.12s; }
+    .layer-2        { opacity:0; animation: fade-up 0.5s ease forwards 0.28s; }
+    .layer-1        { opacity:0; animation: fade-up 0.5s ease forwards 0.44s; }
+    .chain-bar      { opacity:0; animation: fade-in 0.5s ease forwards 0.60s; }
+
+    /* ── Header ── */
+    .slide-header {
+      padding: clamp(0.9rem, 1.3vw, 1.8rem) clamp(2rem, 3.5vw, 5rem);
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .eyebrow {
+      font-size: clamp(0.58rem, 0.7vw, 0.82rem);
+      font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin-bottom: 0.2rem;
+    }
+    .headline {
+      font-size: clamp(1.4rem, 2.2vw, 3rem);
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+      color: #fff;
+    }
+    .hl-blue   { color: #7BA8FF; font-weight: 900; }
+    .hl-teal   { color: #5DD9D3; font-weight: 900; }
+
+    /* ── Stack of 3 equal layers ── */
+    .stack {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* ── Each layer: same 3-column grid ── */
+    .layer {
+      flex: 1;
+      display: grid;
+      grid-template-columns: clamp(130px, 14vw, 190px) 1fr clamp(260px, 30%, 420px);
+      align-items: center;
+      gap: clamp(2rem, 3.5vw, 5rem);
+      padding: 0 clamp(2rem, 3.5vw, 5rem);
+      border-left: 4px solid var(--lc);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      position: relative;
+      background: var(--layer-bg, transparent);
+      min-height: 0;
+    }
+
+    .layer-1 { --lc: #2363F4; --layer-bg: rgba(35,99,244,0.05); }
+    .layer-2 { --lc: #00BFB3; --layer-bg: rgba(0,191,179,0.05); }
+    .layer-3 { --lc: #E5601A; --layer-bg: rgba(229,96,26,0.05); }
+
+    /* ── Left col: number badge + label ── */
+    .layer-id {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .layer-num {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: clamp(32px, 2.8vw, 44px);
+      height: clamp(32px, 2.8vw, 44px);
+      border-radius: 10px;
+      background: var(--lc);
+      font-size: clamp(0.75rem, 0.9vw, 1.1rem);
+      font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .layer-label {
+      font-size: clamp(0.58rem, 0.7vw, 0.82rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--lc);
+      line-height: 1.4;
+    }
+    .layer-sublabel {
+      font-size: clamp(0.55rem, 0.65vw, 0.76rem);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      margin-top: 0.1rem;
+    }
+
+    /* ── Center col: claim ── */
+    .layer-claim {
+      font-size: clamp(1.4rem, 2vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.18;
+      color: #fff;
+    }
+    .layer-sub {
+      font-size: clamp(0.8rem, 0.95vw, 1.15rem);
+      color: rgba(255,255,255,0.5);
+      line-height: 1.5;
+      margin-top: clamp(0.4rem, 0.55vw, 0.75rem);
+    }
+
+    /* ── Right col: stats (L1) or bullets (L2, L3) ── */
+
+    /* Layer 1 stats */
+    .l1-stats {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.8rem, 1.1vw, 1.5rem);
+    }
+    .l1-stat {
+      display: flex;
+      align-items: baseline;
+      gap: 0.85rem;
+    }
+    .l1-stat-num {
+      font-size: clamp(1.6rem, 2.2vw, 3rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #2363F4;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .l1-stat-label {
+      font-size: clamp(0.7rem, 0.85vw, 1rem);
+      color: rgba(255,255,255,0.5);
+      line-height: 1.35;
+    }
+
+    /* Layer 2 + 3 bullets */
+    .layer-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.5rem, 0.7vw, 0.9rem);
+    }
+    .layer-bullets li {
+      font-size: clamp(0.82rem, 1vw, 1.22rem);
+      color: rgba(255,255,255,0.55);
+      line-height: 1.45;
+      padding-left: 1.1em;
+      position: relative;
+    }
+    .layer-bullets li::before {
+      content: '';
+      position: absolute; left: 0; top: 0.52em;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--lc); opacity: 0.5;
+    }
+
+    /* ── Chain bar ── */
+    .chain-bar {
+      background: rgba(255,255,255,0.04);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: clamp(0.85rem, 1.1vw, 1.5rem) clamp(2rem, 3.5vw, 5rem);
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .chain-item {
+      font-size: clamp(0.85rem, 1.05vw, 1.35rem);
+      font-weight: 700; color: rgba(255,255,255,0.8);
+    }
+    .chain-item.blue   { color: #7BA8FF; }
+    .chain-item.teal   { color: #5DD9D3; }
+    .chain-item.orange { color: #F4956A; }
+    .chain-arrow { color: rgba(255,255,255,0.2); font-size: clamp(0.85rem, 1.05vw, 1.35rem); }
+    .chain-divider { width:1px; height:16px; background:rgba(255,255,255,0.12); margin:0 1rem; }
+    .chain-caption { font-size: clamp(0.68rem, 0.82vw, 1rem); font-style:italic; color:rgba(255,255,255,0.35); }
+  </style>
+</head>
+<body>
+
+  <div class="slide-header">
+    <div class="eyebrow">Elastic Observability · The Platform</div>
+    <h1 class="headline">Three layers. <span class="hl-blue">One structural</span> <span class="hl-teal">advantage.</span></h1>
+  </div>
+
+  <div class="stack">
+
+    <!-- ════ LAYER 3 ════ -->
+    <div class="layer layer-3">
+      <div class="layer-id">
+        <div class="layer-num">03</div>
+        <div class="layer-label">Agent</div>
+      </div>
+      <div>
+        <div class="layer-claim">Investigates, explains, acts.</div>
+        <div class="layer-sub">Closes the loop from anomaly to resolution: at any scale, any hour.</div>
+      </div>
+      <ul class="layer-bullets">
+        <li>Generates parallel hypotheses, ranked by evidence</li>
+        <li>Proposes and executes fixes at the trust level you set</li>
+        <li>Every step cited and auditable: signal to resolution</li>
+      </ul>
+    </div>
+
+    <!-- ════ LAYER 2 ════ -->
+    <div class="layer layer-2">
+      <div class="layer-id">
+        <div class="layer-num">02</div>
+        <div class="layer-label">AI Index</div>
+      </div>
+      <div>
+        <div class="layer-claim">Understands the system.</div>
+        <div class="layer-sub">Builds a live model of your environment so the agent never works blind.</div>
+      </div>
+      <ul class="layer-bullets">
+        <li>Extracts Knowledge Indicators from every signal stream</li>
+        <li>Builds a live topology, baseline &amp; SLO model in real time</li>
+        <li>Surfaces only Significant Events the Agent needs to act on</li>
+      </ul>
+    </div>
+
+    <!-- ════ LAYER 1 ════ -->
+    <div class="layer layer-1">
+      <div class="layer-id">
+        <div class="layer-num">01</div>
+        <div class="layer-label">Datastore</div>
+        <div class="layer-sublabel">Elasticsearch</div>
+      </div>
+      <div>
+        <div class="layer-claim">The most efficient datastore for logs and metrics.</div>
+        <div class="layer-sub">Powered by LogsDB. Stores every signal: logs, metrics, traces: at scale.</div>
+      </div>
+      <div class="l1-stats">
+        <div class="l1-stat">
+          <div class="l1-stat-num">65%</div>
+          <div class="l1-stat-label">log storage reduction via LogsDB vs standard Elasticsearch</div>
+        </div>
+        <div class="l1-stat">
+          <div class="l1-stat-num">~40%</div>
+          <div class="l1-stat-label">faster average query time since Jan 2026</div>
+        </div>
+        <div class="l1-stat">
+          <div class="l1-stat-num">5–30×</div>
+          <div class="l1-stat-label">faster metrics queries than Prometheus &amp; Mimir</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="chain-bar">
+    <span class="chain-item blue">Data</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-item teal">AI Index</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-item">Agent</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-item orange">Action</span>
+    <div class="chain-divider"></div>
+    <span class="chain-caption">Each layer feeds the next. You can't skip the chain.</span>
+  </div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Thank You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    body {
+      background: #2363F4;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .mark-wrap {
+      position: fixed;
+      right: -230px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1050px;
+      max-width: 1100px;
+      opacity: 0;
+      animation: mark-appear 1.4s ease forwards 0.2s;
+    }
+    @keyframes mark-appear {
+      from { opacity: 0; transform: translateY(-50%) scale(0.94); }
+      to   { opacity: 0.55; transform: translateY(-50%) scale(1); }
+    }
+
+    .mark-svg {
+      width: 100%;
+      height: auto;
+      animation: mark-breathe 8s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes mark-breathe {
+      0%, 100% { transform: scale(1)    rotate(0deg); }
+      35%       { transform: scale(1.02) rotate(1.2deg); }
+      65%       { transform: scale(0.99) rotate(-0.8deg); }
+    }
+
+    .bubble { animation: bubble-pulse 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    .b1 { animation-delay: 0s; }
+    .b2 { animation-delay: 0.8s; }
+    .b3 { animation-delay: 1.6s; }
+    .b4 { animation-delay: 2.4s; }
+    .b5 { animation-delay: 3.2s; }
+    .b6 { animation-delay: 4.0s; }
+    @keyframes bubble-pulse {
+      0%, 100% { transform: scale(1);    opacity: 1; }
+      50%       { transform: scale(1.04); opacity: 0.82; }
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      padding: 0 77px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 65%;
+    }
+
+    .cover-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: slide-in 0.7s ease forwards 0.6s;
+    }
+
+    .cover-title {
+      font-size: 90px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      color: #fff;
+      opacity: 0;
+      transform: translateX(-24px);
+      animation: slide-in 0.75s ease forwards 0.9s;
+    }
+
+    .cover-sub {
+      margin-top: 1.6rem;
+      font-size: 17px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.6;
+      max-width: 480px;
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: slide-in 0.7s ease forwards 1.25s;
+    }
+    .cover-sub strong { color: #fff; font-weight: 600; }
+
+    @keyframes slide-in {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .cover-footer {
+      position: relative;
+      z-index: 10;
+      padding: 2rem 77px;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      opacity: 0;
+      animation: fade-up 0.7s ease forwards 1.5s;
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .elastic-logo { display: flex; align-items: center; gap: 0.75rem; }
+    .elastic-wordmark { font-size: 1.3rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+    .footer-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.25); }
+    .footer-tagline { font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.4; font-weight: 400; }
+  </style>
+</head>
+<body>
+
+  <div class="mark-wrap">
+    <svg class="mark-svg" viewBox="0 0 245 236" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path class="bubble b1" d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" stroke="#1A3FA8" stroke-width="2.5"/>
+      <path class="bubble b2" d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" stroke="#1A3FA8" stroke-width="2.5"/>
+      <path class="bubble b3" d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" stroke="#1A3FA8" stroke-width="2.5"/>
+      <path class="bubble b4" d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" stroke="#1A3FA8" stroke-width="2.5"/>
+      <path class="bubble b5" d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" stroke="#1A3FA8" stroke-width="2.5"/>
+      <path class="bubble b6" d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" stroke="#1A3FA8" stroke-width="2.5"/>
+    </svg>
+  </div>
+
+  <div class="content">
+    <div class="cover-label">Elastic Observability</div>
+    <h1 class="cover-title">Thank you.</h1>
+    <p class="cover-sub">
+      Questions? Let's keep the conversation going.<br>
+      <strong>elastic.co/observability</strong>
+    </p>
+  </div>
+
+  <div class="cover-footer">
+    <div class="elastic-logo">
+      <svg width="42" height="41" viewBox="0 0 245 236" xmlns="http://www.w3.org/2000/svg">
+        <path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/>
+        <path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/>
+        <path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/>
+        <path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/>
+        <path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/>
+        <path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/>
+        <path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/>
+      </svg>
+      <span class="elastic-wordmark">elastic</span>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-tagline">The Search<br>AI Company</div>
+  </div>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nightshift: Agentic SRE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #050D1A;
+      color: #fff; display: flex; flex-direction: column;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(rgba(56,189,248,0.09) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -15%; left: -5%;
+      width: 55%; height: 70%;
+      background: radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    @keyframes fade-up  { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none} }
+    @keyframes fade-in  { from{opacity:0}to{opacity:1} }
+    @keyframes dot-pulse {
+      0%,80%,100% { transform:translateY(0); opacity:0.4; }
+      40%          { transform:translateY(-5px); opacity:1; }
+    }
+
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding: 17px 45px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 0.2rem; }
+    .bar-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+    .bar-title .hl { background: linear-gradient(135deg,#38BDF8,#BAE6FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .status-pills { display: flex; gap: 0.5rem; align-items: center; }
+    .sp {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+      padding: 0.28em 0.75em; border-radius: 6px;
+      border: 1px solid var(--c); color: var(--c); background: var(--bg);
+    }
+
+    .main { flex: 1; min-height: 0; display: flex; gap: 32px; padding: 19px 45px; align-items: stretch; }
+
+    .ctx {
+      flex-shrink: 0; width: 276px;
+      display: flex; flex-direction: column; justify-content: center;
+      gap: 15px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+      overflow: hidden; min-width: 0;
+      transition: width 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+    }
+    .ctx-desc { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.6; font-weight: 300; }
+    .ctx-desc strong { color: #fff; font-weight: 700; }
+    .type-cards { display: flex; flex-direction: column; gap: 0.42rem; }
+    .type-card { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0.7rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; border-left: 3px solid var(--tc); }
+    .tc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tc); flex-shrink: 0; margin-top: 0.3em; }
+    .tc-name { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.88); }
+    .tc-sub { font-size: 7px; color: rgba(255,255,255,0.28); line-height: 1.35; margin-top: 0.1rem; }
+    .ctx-hint { font-size: 8px; color: rgba(255,255,255,0.22); font-style: italic; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; }
+    .ctx-hint span { color: #38BDF8; }
+
+    .frame-wrap {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 32px 80px rgba(0,0,0,0.6);
+      opacity: 0; animation: fade-in 0.6s ease forwards 0.35s;
+    }
+    .b-chrome { background: #161B22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0.5rem 0.85rem; display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+    .b-dots { display: flex; gap: 5px; }
+    .b-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .b-url { flex: 1; background: rgba(0,0,0,0.22); border-radius: 4px; padding: 0.18rem 0.65rem; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: rgba(255,255,255,0.3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .ns-ui {
+      background: #0D1117; color: #E6EDF3;
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      font-family: 'Inter', -apple-system, sans-serif;
+      position: relative; overflow: hidden;
+    }
+
+    .frame-scroll {
+      flex: 1; min-height: 0;
+      overflow-y: auto; overflow-x: hidden;
+      padding: 16px 18px 0;
+      scrollbar-width: thin;
+      scrollbar-color: #30363D transparent;
+    }
+    .frame-scroll::-webkit-scrollbar { width: 4px; }
+    .frame-scroll::-webkit-scrollbar-thumb { background: #30363D; border-radius: 4px; }
+
+    .frame-bottom {
+      flex-shrink: 0;
+      padding: 10px 18px 12px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      background: #0D1117;
+    }
+
+    .ns-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(56,189,248,0.1); color: #38BDF8;
+      border: 1px solid rgba(56,189,248,0.35);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+      padding: 3px 9px; border-radius: 20px;
+    }
+
+    .ns-title-wrap { margin-bottom: 10px; }
+    .ns-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .ns-title {
+      font-size: 14px;
+      font-weight: 800; color: #E6EDF3; line-height: 1.2;
+    }
+    .ns-subtitle {
+      font-size: 10px;
+      color: rgba(255,255,255,0.48); line-height: 1.4;
+    }
+
+    .br-card {
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      padding: 13px 14px; margin-bottom: 10px;
+    }
+    .br-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .br-gauge { flex-shrink: 0; }
+    .br-info { flex: 1; }
+    .br-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
+    .br-label-row { display: flex; justify-content: space-between; align-items: center; }
+    .br-time { font-size: 11px; color: rgba(255,255,255,0.32); }
+    .br-severity { font-size: 15px; font-weight: 800; color: #FF7B72; margin-bottom: 4px; }
+    .br-desc { font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.5; }
+
+    .chip {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 700;
+      padding: 1px 6px; border-radius: 10px;
+      vertical-align: middle; line-height: 1.6;
+    }
+    .chip-red   { background: rgba(239,68,68,0.18); color: #FF7B72; }
+    .chip-orange{ background: rgba(245,158,11,0.18); color: #F59E0B; }
+
+    .blast-bar-wrap {
+      padding: 10px 0 4px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .blast-bar-header {
+      display: flex; align-items: baseline; gap: 6px; margin-bottom: 7px;
+    }
+    .blast-bar-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.88); }
+    .blast-bar-sub   { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .blast-bar {
+      display: flex; height: 7px; border-radius: 99px; overflow: hidden;
+      background: rgba(255,255,255,0.06); margin-bottom: 7px;
+    }
+    .blast-bar-confirmed { background: #FF7B72; width: 25%; border-radius: 99px 0 0 99px; }
+    .blast-bar-exposed   { background: #F59E0B; flex: 1; }
+    .blast-bar-legend {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .blast-legend-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; margin-right: 4px; vertical-align: middle;
+    }
+    .blast-legend-item { font-size: 11px; color: rgba(255,255,255,0.52); display: flex; align-items: center; }
+
+    .action-section {
+      background: rgba(255,255,255,0.04); border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.07);
+      padding: 11px 13px; margin-bottom: 10px;
+    }
+    .action-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 8px; }
+    .action-btns { display: flex; gap: 7px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      padding: 6px 13px; border-radius: 7px; cursor: pointer;
+      border: 1px solid; transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-outline { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.18); color: #E6EDF3; }
+    .btn-purple  { background: rgba(56,189,248,0.18); border-color: rgba(56,189,248,0.45); color: #79C0FF; }
+    .btn-ghost   { background: transparent; border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.45); }
+    .btn-purple-solid { background: #1D6FF2; border-color: #1D6FF2; color: #fff; }
+
+    .chat-input-wrap {
+      border: 1.5px solid rgba(56,189,248,0.45); border-radius: 8px;
+      padding: 8px 11px; margin-bottom: 5px;
+      background: rgba(255,255,255,0.03);
+    }
+    .chat-input-placeholder { font-size: 13px; color: rgba(255,255,255,0.28); margin-bottom: 8px; }
+    .chat-input-bar { display: flex; align-items: center; justify-content: space-between; }
+    .chat-input-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.45); }
+    .sonnet-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); }
+    .send-btn { width: 24px; height: 24px; background: #38BDF8; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .send-btn svg { width: 11px; height: 11px; }
+
+    .footer-links { font-size: 11px; color: rgba(255,255,255,0.35); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .footer-link { display: inline-flex; align-items: center; gap: 4px; color: #38BDF8; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .footer-link:hover { text-decoration: underline; }
+
+    .detail-panel {
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: min(52%, 400px);
+      background: #161B22;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column;
+      transform: translateX(101%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      z-index: 100;
+    }
+    .detail-panel.open { transform: translateX(0); }
+
+    .dp-header { flex-shrink: 0; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .dp-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .dp-title { font-size: 14px; font-weight: 700; color: #E6EDF3; line-height: 1.3; }
+    .dp-close { flex-shrink: 0; background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.32); font-size: 15px; line-height: 1; padding: 0 2px; transition: color 0.15s; }
+    .dp-close:hover { color: rgba(255,255,255,0.7); }
+    .dp-detected { font-size: 11px; color: rgba(255,255,255,0.35); display: flex; align-items: center; gap: 4px; }
+
+    .dp-metrics { flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .dp-metric { padding: 9px 11px; border-right: 1px solid rgba(255,255,255,0.06); }
+    .dp-metric:last-child { border-right: none; }
+    .dp-metric-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+    .dp-metric-val { font-size: 13px; font-weight: 700; color: #E6EDF3; }
+    .badge-critical { display: inline-block; background: rgba(239,68,68,0.15); color: #FF7B72; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+    .badge-escalate { display: inline-flex; align-items: center; gap: 3px; background: rgba(245,158,11,0.15); color: #F59E0B; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+
+    .dp-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; scrollbar-width: thin; scrollbar-color: #30363D transparent; }
+    .dp-body::-webkit-scrollbar { width: 3px; }
+    .dp-body::-webkit-scrollbar-thumb { background: #30363D; border-radius: 3px; }
+
+    .dp-section-head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; color: #E6EDF3; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 8px; cursor: pointer; }
+    .dp-sub-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 8px; }
+    .dp-body-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.65; margin-bottom: 8px; }
+
+    .dp-root-cause { display: flex; gap: 10px; margin-bottom: 10px; }
+    .dp-root-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .dp-reco-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+    .dp-reco-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .dp-reco-label { font-size: 13px; font-weight: 700; color: #E6EDF3; }
+    .dp-reco-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+
+    .chat-top-card { display: flex; gap: 10px; align-items: flex-start; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); border-radius: 9px; padding: 11px 13px; margin-bottom: 10px; }
+    .chat-mini-info { flex: 1; }
+    .chat-mini-title { font-size: 14px; font-weight: 700; color: #E6EDF3; margin: 3px 0; }
+    .chat-mini-desc { font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+    .chat-mini-btns { display: flex; gap: 6px; margin-top: 7px; }
+
+    .chat-convo { display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+
+    .msg-user { display: flex; justify-content: flex-end; opacity: 0; }
+    .msg-user.show { animation: fade-up 0.3s ease forwards; }
+    .bubble-user {
+      background: rgba(56,189,248,0.22); color: #79C0FF;
+      font-size: 13px; line-height: 1.55;
+      padding: 8px 12px; border-radius: 12px 12px 3px 12px;
+      max-width: 90%;
+    }
+
+    .msg-thinking { display: flex; align-items: center; gap: 8px; opacity: 0; font-size: 13px; color: rgba(255,255,255,0.42); }
+    .msg-thinking.show { animation: fade-in 0.25s ease forwards; }
+    .dots { display: flex; gap: 4px; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.4); animation: dot-pulse 1.2s ease-in-out infinite; }
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    .msg-reasoning { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.45); opacity: 0; }
+    .msg-reasoning.show { animation: fade-in 0.25s ease forwards; }
+    .reasoning-icon { color: #38BDF8; }
+
+    .msg-ai { opacity: 0; }
+    .msg-ai.show { animation: fade-up 0.35s ease forwards; }
+
+    .ai-section { margin-bottom: 10px; }
+    .ai-section-title { font-size: 14px; font-weight: 800; color: #E6EDF3; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; }
+    .ai-h2 { font-size: 13px; font-weight: 700; color: #E6EDF3; margin-bottom: 5px; }
+    .ai-body { font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.65; margin-bottom: 6px; }
+    .ai-body strong { color: #E6EDF3; }
+
+    code, .mono {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255,255,255,0.09); color: #79C0FF;
+      padding: 0.1em 0.35em; border-radius: 3px;
+      font-size: 0.88em;
+    }
+
+    .evidence-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+    .evidence-table th { text-align: left; font-weight: 700; color: rgba(255,255,255,0.45); padding: 3px 7px; border-bottom: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+    .evidence-table td { padding: 5px 7px; border-bottom: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); vertical-align: top; }
+    .evidence-table tr:last-child td { border-bottom: none; }
+    .weight-high { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #FF7B72; }
+    .weight-dot { width: 5px; height: 5px; border-radius: 50%; background: #FF7B72; }
+
+    .steps-list { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+    .steps-list li { display: flex; gap: 7px; align-items: flex-start; font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.5; }
+    .step-num { flex-shrink: 0; width: 17px; height: 17px; border-radius: 50%; background: rgba(56,189,248,0.2); color: #38BDF8; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+
+    .ns-views { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+    .ns-view { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; display: flex; flex-direction: column; }
+    .ns-view.active { opacity: 1; pointer-events: auto; }
+
+    .term-panel {
+      flex-shrink: 0; width: 0; overflow: hidden;
+      transition: width 0.42s cubic-bezier(0.4,0,0.2,1);
+    }
+    .term-panel.open { width: min(46vw, 580px); }
+    .term-inner {
+      width: min(46vw, 580px); height: 100%;
+      display: flex; flex-direction: column;
+      background: #0D1117;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .term-chrome {
+      flex-shrink: 0; background: #161B22;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 0.5rem 0.85rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .term-title {
+      flex: 1; text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; color: rgba(255,255,255,0.32);
+    }
+    .term-body {
+      flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.7;
+      scrollbar-width: thin; scrollbar-color: #30363D transparent;
+    }
+    .term-body::-webkit-scrollbar { width: 3px; }
+    .term-body::-webkit-scrollbar-thumb { background: #30363D; border-radius: 3px; }
+    @keyframes term-fade { from{opacity:0} to{opacity:1} }
+    .term-line { opacity: 0; animation: term-fade 0.18s ease forwards; white-space: nowrap; overflow: hidden; }
+    .term-blank { height: 0.55em; opacity: 1; }
+    .tl-cmd  { color: #7EE787; }
+    .tl-cmd::before { content: '$ '; color: rgba(255,255,255,0.28); }
+    .tl-out  { color: rgba(255,255,255,0.52); }
+    .tl-head { color: rgba(255,255,255,0.28); }
+    .tl-ok   { color: #3FB950; font-weight: 600; }
+    .tl-warn { color: #F59E0B; }
+    .tl-err  { color: #FF7B72; }
+
+    .msg-action { opacity: 0; }
+    .msg-action.show { animation: fade-up 0.35s ease forwards; }
+    .action-proposal {
+      background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.25); border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .action-proposal p { font-size: 13px; color: rgba(255,255,255,0.78); line-height: 1.55; margin-bottom: 7px; }
+    .action-proposal p strong { color: #38BDF8; }
+    .action-btns-row { display: flex; gap: 6px; align-items: center; }
+    .btn-exec { background: #1D6FF2; border-color: #1D6FF2; color: #fff; font-weight: 700; }
+    .btn-exec:hover { opacity: 0.88; }
+
+    .msg-status {
+      display: flex; align-items: flex-start; gap: 6px;
+      font-size: 13px; color: rgba(255,255,255,0.42); line-height: 1.5;
+      padding-left: 2px; opacity: 0;
+    }
+    .msg-status.show { animation: fade-in 0.25s ease forwards; }
+    .msg-status.done { color: #3FB950; font-weight: 600; }
+
+    .sig-card {
+      border-radius: 12px;
+      background: linear-gradient(140deg, rgba(56,189,248,0.14) 0%, rgba(29,111,242,0.12) 100%);
+      border: 1px solid rgba(56,189,248,0.25);
+      overflow: hidden;
+      opacity: 0;
+      box-shadow: 0 2px 12px rgba(56,189,248,0.15);
+    }
+    .sig-card.show { animation: fade-up 0.45s ease forwards; }
+    .sig-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 13px 9px;
+      border-bottom: 1px solid rgba(56,189,248,0.2);
+    }
+    .sig-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+    .sig-title { font-size: 13px; font-weight: 800; color: #79C0FF; line-height: 1.2; }
+    .sig-sub { font-size: 10px; color: #38BDF8; margin-top: 2px; font-weight: 500; }
+    .sig-brain-badge {
+      margin-left: auto; flex-shrink: 0;
+      background: #1D6FF2; color: #fff;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .sig-rows {
+      padding: 9px 13px;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .sig-row { display: flex; gap: 10px; font-size: 12px; line-height: 1.5; }
+    .sig-key { flex-shrink: 0; width: 90px; font-weight: 700; color: #38BDF8; }
+    .sig-val { color: rgba(255,255,255,0.75); }
+    .sig-footer {
+      background: rgba(56,189,248,0.1);
+      border-top: 1px solid rgba(56,189,248,0.2);
+      padding: 8px 13px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .sig-brain-note { font-size: 12px; color: #38BDF8; font-weight: 600; }
+    .sig-brain-pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: #1D6FF2; flex-shrink: 0;
+      animation: brain-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes brain-pulse {
+      0%,100% { opacity:1; transform:scale(1); box-shadow:0 0 0 0 rgba(56,189,248,0.4); }
+      50% { opacity:0.8; transform:scale(1.15); box-shadow:0 0 0 5px rgba(56,189,248,0); }
+    }
+
+    .mode-bar {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 6px 45px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.12);
+    }
+    .mode-label {
+      font-size: 7px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: rgba(255,255,255,0.2); margin-right: 4px;
+    }
+    .mode-pill {
+      display: flex; align-items: center; gap: 4px;
+      padding: 3px 13px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1); background: transparent;
+      color: rgba(255,255,255,0.38); font-family: inherit;
+      font-size: 9px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em;
+    }
+    .mode-pill:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.72); }
+    .mode-pill.active { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.45); color: #38BDF8; }
+
+    .hl-ui { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #0D1117; }
+    .hl-header {
+      flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+      padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: #161B22; font-family: 'JetBrains Mono', monospace;
+    }
+    .hl-mode-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.3); color: #38BDF8;
+    }
+    .hl-incident { font-size: 11px; color: rgba(255,255,255,0.55); flex: 1; }
+    .hl-elapsed  { font-size: 10px; color: rgba(255,255,255,0.28); font-variant-numeric: tabular-nums; }
+    .hl-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; }
+    .hl-col { display: flex; flex-direction: column; overflow: hidden; }
+    .hl-col:first-child { border-right: 1px solid rgba(255,255,255,0.06); }
+    .hl-col-head {
+      flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.22); padding: 6px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .hl-events {
+      flex: 1; overflow-y: auto; padding: 8px 12px;
+      display: flex; flex-direction: column; gap: 5px;
+      scrollbar-width: thin; scrollbar-color: #30363D transparent;
+    }
+    .hl-events::-webkit-scrollbar { width: 3px; }
+    .hl-events::-webkit-scrollbar-thumb { background: #30363D; }
+    .hl-event {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.5;
+      opacity: 0; animation: term-fade 0.2s ease forwards;
+    }
+    .hl-ts  { color: rgba(255,255,255,0.25); flex-shrink: 0; font-size: 10px; padding-top: 1px; }
+    .hl-ev  { color: rgba(255,255,255,0.65); }
+    .hl-ev-ok  { color: #3FB950; font-weight: 600; }
+    .hl-ev-err { color: #FF7B72; }
+    .hl-ev-hi  { color: #79C0FF; }
+    .hl-term-bg {
+      flex: 1; overflow-y: auto; padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.7;
+      scrollbar-width: thin; scrollbar-color: #30363D transparent;
+    }
+    .hl-term-bg::-webkit-scrollbar { width: 3px; }
+    .hl-term-bg::-webkit-scrollbar-thumb { background: #30363D; }
+
+    .agent-ui { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #1C1C1E; }
+    .agent-chrome {
+      flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+      padding: 7px 14px; background: #2A2A2C; border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .agent-badge { font-size: 11px; font-weight: 700; color: #F59E0B; }
+    .agent-sep   { color: rgba(255,255,255,0.15); }
+    .agent-cmd   { font-size: 10px; color: rgba(255,255,255,0.35); }
+    .agent-body  {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 14px 18px;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.75;
+      scrollbar-width: thin; scrollbar-color: #48484A transparent;
+    }
+    .agent-body::-webkit-scrollbar { width: 3px; }
+    .agent-body::-webkit-scrollbar-thumb { background: #48484A; }
+    .at-line  { opacity: 0; animation: term-fade 0.2s ease forwards; }
+    .at-blank { height: 0.6em; opacity: 1; }
+    .at-tool  { color: #F59E0B; }
+    .at-tool-name { color: #F59E0B; font-weight: 700; }
+    .at-out   { color: rgba(255,255,255,0.45); padding-left: 18px; }
+    .at-out::before { content: '⎿ '; color: rgba(255,255,255,0.2); }
+    .at-text  { color: rgba(255,255,255,0.72); }
+    .at-ok    { color: #3FB950; font-weight: 600; }
+
+    .cc-startup {
+      padding: 10px 0 14px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .cc-icon { flex-shrink: 0; margin-top: 1px; }
+    .cc-info { display: flex; flex-direction: column; gap: 3px; }
+    .cc-name {
+      font-size: 13px; font-weight: 700;
+      color: #fff; letter-spacing: -0.01em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cc-name .cc-ver { color: rgba(255,255,255,0.38); font-weight: 400; margin-left: 4px; }
+    .cc-model { font-size: 10.5px; color: rgba(255,255,255,0.42); font-family: 'JetBrains Mono', monospace; }
+    .cc-dir   { font-size: 10.5px; color: rgba(255,255,255,0.62); font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>
+      <div class="eyebrow">Observability · Agentic SRE</div>
+      <div class="bar-title"><span class="hl">Nightshift</span>, the Elastic AI SRE</div>
+    </div>
+    <div class="status-pills">
+      <span class="sp" style="--c:#FF7B72;--bg:rgba(255,107,107,0.08)">🔴 Blast Radius: HIGH</span>
+      <span class="sp" style="--c:#38BDF8;--bg:rgba(56,189,248,0.08)"><svg width="11" height="11" viewBox="30 215 220 220" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;filter:drop-shadow(0 0 3px rgba(56,189,248,0.7))"><path d="m101.9 306.9 45.2 20.6 45.6-40c.7-3.3 1-6.5 1-10 0-28.1-22.9-51-51-51-16.8 0-32.5 8.3-42 22.2l-7.6 39.3z" fill="#38BDF8"/><path d="m55.1 354.7c-.7 3.3-1 6.7-1 10.2 0 28.2 23 51.1 51.1 51.1 16.9 0 32.7-8.4 42.2-22.3l7.5-39.2-10-19.2-45.4-20.7z" fill="#38BDF8"/><path d="m54.9 276.5 31 7.3 6.8-35.2c-4.2-3.2-9.4-5-14.8-5-13.4 0-24.4 10.9-24.4 24.4-.1 3 .4 5.9 1.4 8.5" fill="#38BDF8"/><path d="m52.2 283.9c-13.8 4.5-23.5 17.8-23.5 32.4 0 14.2 8.8 26.9 22 31.9l43.4-39.2-7.9-17z" fill="#38BDF8"/><path d="m155.4 393.6c4.3 3.2 9.4 5.1 14.7 5.1 13.4 0 24.4-10.9 24.4-24.4 0-3-.5-5.8-1.5-8.5l-30.9-7.2z" fill="#38BDF8"/><path d="m161.7 350.4 34 7.9c13.9-4.5 23.5-17.8 23.5-32.5 0-14.1-8.8-26.9-22-31.9l-44.5 39z" fill="#38BDF8"/></svg>Nightshift Active</span>
+      <span class="sp" style="--c:#38BDF8;--bg:rgba(123,168,255,0.08)">🤖 Agent Ready</span>
+    </div>
+  </div>
+
+  <div class="mode-bar">
+    <span class="mode-label">Mode</span>
+    <button class="mode-pill active" data-mode="chat">💬 Chat</button>
+    <button class="mode-pill" data-mode="background">🤖 Background</button>
+    <button class="mode-pill" data-mode="agent">⌨ Agent Client</button>
+  </div>
+
+  <div class="main">
+
+    <div class="ctx">
+      <div class="ctx-desc">
+        <strong>Nightshift</strong> monitors your systems while your team rests: detecting anomalies, grouping significant events, and surfacing <strong>AI-driven remediation</strong> the moment something goes wrong.
+      </div>
+      <div class="type-cards">
+        <div class="type-card" style="--tc:#FF7B72">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Blast Radius</div><div class="tc-sub">Real-time scoring of how far an incident has spread across your system</div></div>
+        </div>
+        <div class="type-card" style="--tc:#38BDF8">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">AI Remediation</div><div class="tc-sub">Agent-driven root cause analysis with kubectl-ready next steps</div></div>
+        </div>
+        <div class="type-card" style="--tc:#38BDF8">
+          <div class="tc-dot"></div>
+          <div><div class="tc-name">Background Execution</div><div class="tc-sub">Run remediation autonomously: wake up to a resolved incident</div></div>
+        </div>
+      </div>
+      <div class="ctx-hint"><span>Press → to play through each demo</span></div>
+    </div>
+
+    <div class="frame-wrap">
+      <div class="b-chrome">
+        <div class="b-dots">
+          <div class="b-dot" style="background:#FF5F57"></div>
+          <div class="b-dot" style="background:#FFBD2E"></div>
+          <div class="b-dot" style="background:#28C940"></div>
+        </div>
+        <div class="b-url" id="browser-url">app/observability/nightshift/overview</div>
+      </div>
+
+      <div class="ns-ui">
+
+        <div class="detail-panel" id="detail-panel">
+          <div class="dp-header">
+            <div class="dp-header-top">
+              <div class="dp-title">Payment Service: payment processing failures</div>
+              <button class="dp-close" id="dp-close-btn">✕</button>
+            </div>
+            <div class="dp-detected">🕐 Detected 5 minutes ago</div>
+          </div>
+          <div class="dp-metrics">
+            <div class="dp-metric">
+              <div class="dp-metric-label">Severity</div>
+              <div class="dp-metric-val"><span class="badge-critical">Critical</span></div>
+            </div>
+            <div class="dp-metric">
+              <div class="dp-metric-label">Criticality</div>
+              <div class="dp-metric-val">● High</div>
+            </div>
+            <div class="dp-metric">
+              <div class="dp-metric-label">Impact</div>
+              <div class="dp-metric-val" style="color:#FF7B72">High</div>
+            </div>
+            <div class="dp-metric">
+              <div class="dp-metric-label">Recommended action</div>
+              <div class="dp-metric-val"><span class="badge-escalate">⚠️ Escalate</span></div>
+            </div>
+          </div>
+          <div class="dp-body">
+            <div class="dp-section-head">General information <span>∨</span></div>
+
+            <div class="dp-sub-label">Summary</div>
+            <div class="dp-body-text">
+              This signal was raised on <code>logs.otel</code>. Payment Service: payment processing failures reflects a statistically significant deviation from the expected pattern for the selected window: review downstream dependencies and blast radius before changes propagate.
+            </div>
+
+            <div class="dp-root-cause">
+              <div class="dp-root-icon">
+                <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                  <circle cx="11" cy="11" r="3" fill="#38BDF8"/>
+                  <circle cx="11" cy="11" r="6" stroke="#38BDF8" stroke-width="1.5" fill="none" opacity="0.45"/>
+                  <circle cx="11" cy="11" r="10" stroke="#38BDF8" stroke-width="1" fill="none" opacity="0.2"/>
+                </svg>
+              </div>
+              <div>
+                <div class="dp-sub-label" style="margin-top:0">Root cause</div>
+                <div class="dp-body-text">
+                  The checkout service's <code>placeOrder</code> gRPC call fails with <code>ECONNREFUSED</code> to <code>10.103.136.237:9999</code>: the payment service's upstream dependency remains unreachable. Confirmed by KI query returning 5 rows at 09:08 UTC, all showing gRPC code 13 INTERNAL. The failure has persisted for 3.5+ hours since onset at ~05:30 UTC.
+                </div>
+              </div>
+            </div>
+
+            <div class="dp-reco-box">
+              <div class="dp-reco-row">
+                <div class="dp-reco-label">Recommendations plan</div>
+                <span class="badge-escalate">⚠️ Escalate</span>
+              </div>
+              <div class="dp-reco-text">We recommend a <strong>2 step plan</strong> to understand what the remediation of this might be.</div>
+            </div>
+
+            <button class="btn btn-purple-solid" style="width:100%;justify-content:center;padding:8px;" id="remediate-from-panel">
+              🤖 Remediate
+            </button>
+          </div>
+        </div>
+
+        <div class="frame-scroll" id="frame-scroll">
+          <div class="ns-views" id="ns-views">
+
+            <div class="ns-view active" id="view-overview">
+              <div class="ns-title-wrap">
+                <div class="ns-title-row">
+                  <span class="ns-badge"><svg width="11" height="11" viewBox="30 215 220 220" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;filter:drop-shadow(0 0 3px rgba(56,189,248,0.7))"><path d="m101.9 306.9 45.2 20.6 45.6-40c.7-3.3 1-6.5 1-10 0-28.1-22.9-51-51-51-16.8 0-32.5 8.3-42 22.2l-7.6 39.3z" fill="#38BDF8"/><path d="m55.1 354.7c-.7 3.3-1 6.7-1 10.2 0 28.2 23 51.1 51.1 51.1 16.9 0 32.7-8.4 42.2-22.3l7.5-39.2-10-19.2-45.4-20.7z" fill="#38BDF8"/><path d="m54.9 276.5 31 7.3 6.8-35.2c-4.2-3.2-9.4-5-14.8-5-13.4 0-24.4 10.9-24.4 24.4-.1 3 .4 5.9 1.4 8.5" fill="#38BDF8"/><path d="m52.2 283.9c-13.8 4.5-23.5 17.8-23.5 32.4 0 14.2 8.8 26.9 22 31.9l43.4-39.2-7.9-17z" fill="#38BDF8"/><path d="m155.4 393.6c4.3 3.2 9.4 5.1 14.7 5.1 13.4 0 24.4-10.9 24.4-24.4 0-3-.5-5.8-1.5-8.5l-30.9-7.2z" fill="#38BDF8"/><path d="m161.7 350.4 34 7.9c13.9-4.5 23.5-17.8 23.5-32.5 0-14.1-8.8-26.9-22-31.9l-44.5 39z" fill="#38BDF8"/></svg>NIGHTSHIFT</span>
+                  <div class="ns-title"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF7B72;margin-right:6px;vertical-align:middle;flex-shrink:0;box-shadow:0 0 6px rgba(255,123,114,0.6);"></span>payment-service is down</div>
+                </div>
+                <div class="ns-subtitle">CrashLoopBackOff in payments namespace — checkout and order pipelines blocked.</div>
+              </div>
+
+              <div class="br-card">
+                <div class="br-top">
+                  <div class="br-gauge">
+                    <svg width="66" height="66" viewBox="0 0 70 70">
+                      <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(239,68,68,0.2)" stroke-width="6"
+                        stroke-dasharray="132 44" stroke-linecap="round"
+                        transform="rotate(135 35 35)"/>
+                      <circle cx="35" cy="35" r="28" fill="none" stroke="#FF7B72" stroke-width="6"
+                        stroke-dasharray="112 64" stroke-linecap="round"
+                        transform="rotate(135 35 35)"/>
+                      <text x="35" y="40" text-anchor="middle" font-size="15" font-weight="800" fill="#FF7B72" font-family="Inter,sans-serif">85</text>
+                    </svg>
+                  </div>
+                  <div class="br-info">
+                    <div class="br-label-row">
+                      <div class="br-label">Blast radius score</div>
+                      <div class="br-time">(5 minutes ago) ↺</div>
+                    </div>
+                    <div class="br-severity">HIGH</div>
+                    <div class="br-desc">
+                      <strong>payment-service</strong> is in CrashLoopBackOff — gRPC port 9999 unbound after <span class="chip chip-red">14 restarts</span>. Checkout and order pipelines blocked, <span class="chip chip-orange">3 downstream services</span> degraded.
+                    </div>
+                  </div>
+                </div>
+                <div class="blast-bar-wrap">
+                  <div class="blast-bar-header">
+                    <span class="blast-bar-title">Blast radius</span>
+                    <span class="blast-bar-sub">4 of 4 services at risk</span>
+                  </div>
+                  <div class="blast-bar">
+                    <div class="blast-bar-confirmed"></div>
+                    <div class="blast-bar-exposed"></div>
+                  </div>
+                  <div class="blast-bar-legend">
+                    <span class="blast-legend-item"><span class="blast-legend-dot" style="background:#FF7B72"></span>1 confirmed</span>
+                    <span class="blast-legend-item"><span class="blast-legend-dot" style="background:#F59E0B"></span>3 exposed</span>
+                  </div>
+                </div><!-- /.blast-bar-wrap -->
+              </div><!-- /.br-card -->
+
+              <div class="action-section">
+                <div class="action-text">You can start remediation now or let Nightshift handle it in the background.</div>
+                <div class="action-btns">
+                  <button class="btn btn-outline" id="btn-review-details">⊗ Blast Radius</button>
+                  <button class="btn btn-purple" id="btn-remediate-chat">🤖 Remediate</button>
+                  <button class="btn btn-ghost">↺ Run in background</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="ns-view" id="view-chat">
+              <div style="text-align:center;margin-bottom:6px;">
+                <span class="ns-badge"><svg width="11" height="11" viewBox="30 215 220 220" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:3px;filter:drop-shadow(0 0 3px rgba(56,189,248,0.7))"><path d="m101.9 306.9 45.2 20.6 45.6-40c.7-3.3 1-6.5 1-10 0-28.1-22.9-51-51-51-16.8 0-32.5 8.3-42 22.2l-7.6 39.3z" fill="#38BDF8"/><path d="m55.1 354.7c-.7 3.3-1 6.7-1 10.2 0 28.2 23 51.1 51.1 51.1 16.9 0 32.7-8.4 42.2-22.3l7.5-39.2-10-19.2-45.4-20.7z" fill="#38BDF8"/><path d="m54.9 276.5 31 7.3 6.8-35.2c-4.2-3.2-9.4-5-14.8-5-13.4 0-24.4 10.9-24.4 24.4-.1 3 .4 5.9 1.4 8.5" fill="#38BDF8"/><path d="m52.2 283.9c-13.8 4.5-23.5 17.8-23.5 32.4 0 14.2 8.8 26.9 22 31.9l43.4-39.2-7.9-17z" fill="#38BDF8"/><path d="m155.4 393.6c4.3 3.2 9.4 5.1 14.7 5.1 13.4 0 24.4-10.9 24.4-24.4 0-3-.5-5.8-1.5-8.5l-30.9-7.2z" fill="#38BDF8"/><path d="m161.7 350.4 34 7.9c13.9-4.5 23.5-17.8 23.5-32.5 0-14.1-8.8-26.9-22-31.9l-44.5 39z" fill="#38BDF8"/></svg>NIGHTSHIFT</span>
+              </div>
+              <div class="ns-title-wrap">
+                <div class="ns-title" style="font-size:13px">🎯 Your system requires attention</div>
+                <div class="ns-subtitle" style="font-size:9px;">We are detecting more unusual behaviour than normal, review the impact and details and start remediation or further actions.</div>
+              </div>
+
+              <div class="chat-top-card">
+                <div class="br-gauge">
+                  <svg width="48" height="48" viewBox="0 0 52 52">
+                    <circle cx="26" cy="26" r="21" fill="none" stroke="rgba(239,68,68,0.2)" stroke-width="5"
+                      stroke-dasharray="99 33" stroke-linecap="round"
+                      transform="rotate(135 26 26)"/>
+                    <circle cx="26" cy="26" r="21" fill="none" stroke="#FF7B72" stroke-width="5"
+                      stroke-dasharray="89 43" stroke-linecap="round"
+                      transform="rotate(135 26 26)"/>
+                    <text x="26" y="30" text-anchor="middle" font-size="11" font-weight="800" fill="#FF7B72" font-family="Inter,sans-serif">90</text>
+                  </svg>
+                </div>
+                <div class="chat-mini-info">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                    <span class="chip chip-red" style="font-size:8px;">⊗ Critical</span>
+                    <span style="font-size:9px;color:rgba(255,255,255,0.35);">(5 minutes ago)</span>
+                  </div>
+                  <div class="chat-mini-title">Payment Service: payment processing failures</div>
+                  <div class="chat-mini-desc">2,778 total alerts in the last few hours; peak 1,418 in a 30-min window. gRPC connection refused on port 9999.</div>
+                  <div class="chat-mini-btns">
+                    <button class="btn btn-purple" style="font-size:9px;padding:3px 9px;" id="btn-chat-remediate">🤖 Remediate in Chat</button>
+                    <button class="btn btn-outline" style="font-size:9px;padding:3px 9px;" id="btn-chat-view-details">View Details</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chat-convo" id="chat-convo"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="frame-bottom">
+          <div class="chat-input-wrap">
+            <div class="chat-input-placeholder">Body copy</div>
+            <div class="chat-input-bar">
+              <div class="chat-input-left">
+                <span>+</span>
+                <span class="sonnet-badge">🌟 Sonnet 4.5</span>
+              </div>
+              <button class="send-btn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 10V2M2 6l4-4 4 4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="footer-links">
+            <span>Other helpful actions:</span>
+            <a class="footer-link">⬡ Topology view</a>
+            <a class="footer-link">⊞ Open Significant events</a>
+            <a class="footer-link">⊕ Open Discover</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="bg-panel" style="display:none;flex:1;min-height:0;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 32px 80px rgba(0,0,0,0.6);">
+      <div class="b-chrome">
+        <div class="b-dots">
+          <div class="b-dot" style="background:#FF5F57"></div>
+          <div class="b-dot" style="background:#FFBD2E"></div>
+          <div class="b-dot" style="background:#28C940"></div>
+        </div>
+        <div class="b-url">nightshift://autonomous · incident #IN-247</div>
+      </div>
+      <div class="hl-ui">
+        <div class="hl-header">
+          <span class="hl-mode-badge">🤖 AUTONOMOUS</span>
+          <span class="hl-incident">payment-service · payments namespace</span>
+          <span class="hl-elapsed" id="hl-elapsed">00:00</span>
+        </div>
+        <div class="hl-body">
+          <div class="hl-col">
+            <div class="hl-col-head">Activity feed</div>
+            <div class="hl-events" id="hl-events"></div>
+          </div>
+          <div class="hl-col">
+            <div class="hl-col-head">Remote execution</div>
+            <div class="hl-term-bg" id="hl-term-bg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="agent-panel" style="display:none;flex:1;min-height:0;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 32px 80px rgba(0,0,0,0.6);">
+      <div class="b-chrome">
+        <div class="b-dots">
+          <div class="b-dot" style="background:#FF5F57"></div>
+          <div class="b-dot" style="background:#FFBD2E"></div>
+          <div class="b-dot" style="background:#28C940"></div>
+        </div>
+        <div class="b-url">claude --mcp nightshift-sre --namespace payments</div>
+      </div>
+      <div class="agent-ui">
+        <div class="agent-chrome">
+          <span class="agent-badge">claude</span>
+          <span class="agent-sep">·</span>
+          <span class="agent-cmd">nightshift-sre mcp active · payments namespace</span>
+        </div>
+        <div class="agent-body" id="agent-body"></div>
+      </div>
+    </div>
+
+    <div class="term-panel" id="term-panel">
+      <div class="term-inner">
+        <div class="term-chrome">
+          <div class="b-dots">
+            <div class="b-dot" style="background:#FF5F57"></div>
+            <div class="b-dot" style="background:#FFBD2E"></div>
+            <div class="b-dot" style="background:#28C940"></div>
+          </div>
+          <span class="term-title">nightshift — payments</span>
+        </div>
+        <div class="term-body" id="term-body"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    var MODES = ['chat', 'background', 'agent'];
+    var currentModeIdx = 0;
+    var bgRunning = false;
+    var agentRunning = false;
+    var timerInterval = null;
+    var conversationRunning = false;
+    var remediationScheduled = false;
+
+    var viewOverview = document.getElementById('view-overview');
+    var viewChat     = document.getElementById('view-chat');
+    var detailPanel  = document.getElementById('detail-panel');
+    var frameScroll  = document.getElementById('frame-scroll');
+    var chatConvo    = document.getElementById('chat-convo');
+    var browserUrl   = document.getElementById('browser-url');
+    var termPanel    = document.getElementById('term-panel');
+    var termBody     = document.getElementById('term-body');
+    var frameWrap    = document.querySelector('.frame-wrap');
+    var bgPanel      = document.getElementById('bg-panel');
+    var agentPanel   = document.getElementById('agent-panel');
+    var ctxEl        = document.querySelector('.ctx');
+
+    function openDetail() {
+      detailPanel.classList.add('open');
+      browserUrl.textContent = 'app/observability/nightshift/event/payment-service';
+    }
+
+    function closeDetail() {
+      detailPanel.classList.remove('open');
+      browserUrl.textContent = viewChat.classList.contains('active')
+        ? 'app/observability/nightshift/chat'
+        : 'app/observability/nightshift/overview';
+    }
+
+    function resetTerminal() {
+      termPanel.classList.remove('open');
+      termBody.innerHTML = '';
+      if (ctxEl) {
+        ctxEl.style.flexShrink = '';
+        ctxEl.style.width = '';
+        ctxEl.style.opacity = '';
+      }
+    }
+
+    function showChat() {
+      closeDetail();
+      resetTerminal();
+      conversationRunning = false;
+      viewOverview.classList.remove('active');
+      viewChat.classList.add('active');
+      browserUrl.textContent = 'app/observability/nightshift/chat';
+      frameScroll.scrollTop = 0;
+      setTimeout(runConversation, 200);
+    }
+
+    document.getElementById('btn-review-details').addEventListener('click', openDetail);
+    document.getElementById('btn-remediate-chat').addEventListener('click', showChat);
+    document.getElementById('dp-close-btn').addEventListener('click', closeDetail);
+    document.getElementById('remediate-from-panel').addEventListener('click', showChat);
+    document.getElementById('btn-chat-view-details').addEventListener('click', openDetail);
+    document.getElementById('btn-chat-remediate').addEventListener('click', function() {
+      conversationRunning = false;
+      remediationScheduled = false;
+      resetTerminal();
+      chatConvo.innerHTML = '';
+      runConversation();
+    });
+
+    var userText = 'Help me remediate: Payment Service: payment processing failures. What are the possible root causes and recommended next steps?';
+
+    var aiHTML =
+      '<div class="ai-section">' +
+        '<div class="ai-section-title">Payment Service: Payment Processing Failures — Root Cause Analysis</div>' +
+      '</div>' +
+      '<div class="ai-section">' +
+        '<div class="ai-h2">🔴 Root Cause (Confirmed: High Confidence)</div>' +
+        '<div class="ai-body"><strong>The payment service is unreachable on TCP port <code>9999</code>.</strong> The <code>checkout</code> service\'s gRPC <code>placeOrder</code> call is failing with <code>ECONNREFUSED</code> to <strong>10.103.136.237:9999</strong>, meaning the payment service is either down, not listening, or blocked by a network policy.</div>' +
+        '<div class="ai-body">Secondary: the <strong>payment service cannot reach the GCP metadata endpoint</strong> (<code>169.254.169.254</code>), suggesting a misconfigured workload identity — likely the root trigger.</div>' +
+      '</div>' +
+      '<div class="ai-section">' +
+        '<div class="ai-h2">📊 Evidence</div>' +
+        '<table class="evidence-table"><thead><tr><th>Source</th><th>Details</th><th>Weight</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td><code>logs.otel</code></td><td>"could not charge the card: rpc error: code = ECONNREFUSED"</td><td><span class="weight-high"><span class="weight-dot"></span>High</span></td></tr>' +
+        '<tr><td><code>metrics.k8s</code></td><td>1,418 TCP failures on port 9999 in 30-min window at 04:30</td><td><span class="weight-high"><span class="weight-dot"></span>High</span></td></tr>' +
+        '</tbody></table>' +
+      '</div>' +
+      '<div class="ai-section">' +
+        '<div class="ai-h2">🛠 Remediation Plan</div>' +
+        '<ol class="steps-list">' +
+        '<li><span class="step-num">1</span><span>Verify pod status — <code>kubectl get pods -n payments</code></span></li>' +
+        '<li><span class="step-num">2</span><span>Confirm port 9999 not bound — netstat inside pod</span></li>' +
+        '<li><span class="step-num">3</span><span>Delete CrashLoopBackOff pod — let Kubernetes restart clean</span></li>' +
+        '<li><span class="step-num">4</span><span>Watch recovery and verify port 9999 responds</span></li>' +
+        '</ol>' +
+      '</div>';
+
+    function runConversation() {
+      if (conversationRunning) return;
+      conversationRunning = true;
+      remediationScheduled = false;
+      chatConvo.innerHTML = '';
+
+      function scrollBottom() { frameScroll.scrollTop = frameScroll.scrollHeight; }
+
+      setTimeout(function() {
+        var msgUser = document.createElement('div');
+        msgUser.className = 'msg-user';
+        msgUser.innerHTML = '<div class="bubble-user">' + userText + '</div>';
+        chatConvo.appendChild(msgUser);
+        requestAnimationFrame(function() { msgUser.classList.add('show'); scrollBottom(); });
+
+        setTimeout(function() {
+          var msgThink = document.createElement('div');
+          msgThink.className = 'msg-thinking';
+          msgThink.innerHTML = '<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span>Reasoning...</span>';
+          chatConvo.appendChild(msgThink);
+          requestAnimationFrame(function() { msgThink.classList.add('show'); scrollBottom(); });
+
+          setTimeout(function() {
+            msgThink.style.display = 'none';
+
+            var msgReason = document.createElement('div');
+            msgReason.className = 'msg-reasoning';
+            msgReason.innerHTML = '<span class="reasoning-icon">✦</span> Completed reasoning <span style="color:#A0AEC0">›</span>';
+            chatConvo.appendChild(msgReason);
+            requestAnimationFrame(function() { msgReason.classList.add('show'); });
+
+            var delays = [80, 230, 380, 530];
+            var parser = new DOMParser();
+            var doc = parser.parseFromString('<div>' + aiHTML + '</div>', 'text/html');
+            Array.from(doc.body.firstChild.children).forEach(function(section, i) {
+              var wrapper = document.createElement('div');
+              wrapper.className = 'msg-ai ai-section';
+              wrapper.innerHTML = section.innerHTML;
+              chatConvo.appendChild(wrapper);
+              setTimeout(function() { wrapper.classList.add('show'); scrollBottom(); }, delays[i] || i * 150);
+            });
+
+            conversationRunning = false;
+            setTimeout(scrollBottom, 600);
+            if (!remediationScheduled) { remediationScheduled = true; setTimeout(runRemediation, 900); }
+          }, 1800);
+        }, 400);
+      }, 600);
+    }
+
+    function runRemediation() {
+      var started = false;
+      function scrollBottom() { frameScroll.scrollTop = frameScroll.scrollHeight; }
+
+      var msgAction = document.createElement('div');
+      msgAction.className = 'msg-action';
+      msgAction.innerHTML =
+        '<div class="action-proposal">' +
+        '<p><strong>Root cause confirmed.</strong> The payment-service pod is in CrashLoopBackOff (14 restarts) and port 9999 is unbound. I can execute the remediation now — delete the stuck pod and monitor recovery.</p>' +
+        '<div class="action-btns-row">' +
+        '<button class="btn btn-exec" id="btn-approve">✓ Approve &amp; Execute</button>' +
+        '<button class="btn btn-ghost" id="btn-decline">Decline</button>' +
+        '</div></div>';
+      chatConvo.appendChild(msgAction);
+      requestAnimationFrame(function() { msgAction.classList.add('show'); scrollBottom(); });
+
+      function startExecution() {
+        if (started) return;
+        started = true;
+        msgAction.querySelector('.action-btns-row').innerHTML =
+          '<span style="font-size:9px;color:#0369A1;font-weight:700;">✓ Approved — executing now</span>';
+
+        if (ctxEl) {
+          ctxEl.style.flexShrink = '1';
+          ctxEl.style.width = '0';
+          ctxEl.style.opacity = '0';
+        }
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() { termPanel.classList.add('open'); });
+        });
+
+        var LINES = [
+          { cls: 'tl-cmd',    text: 'kubectl get pods -n payments',                                          delay: 400 },
+          { cls: 'tl-head',   text: 'NAME                                  READY   STATUS            RESTARTS   AGE', delay: 950 },
+          { cls: 'tl-err',    text: 'payment-service-7d9f8b6c5-xk8pq      0/1     CrashLoopBackOff  14         47m', delay: 1050 },
+          { cls: 'tl-out',    text: 'checkout-service-6b4d9f7c8-wl3rt      1/1     Running           0          2h',  delay: 1150 },
+          { cls: 'tl-out',    text: 'fraud-detector-85c6d9f4b-m9pjx        1/1     Running           0          2h',  delay: 1250 },
+          { cls: 'term-blank', delay: 1450 },
+          { cls: 'tl-cmd',    text: 'kubectl logs payment-service-7d9f8b6c5-xk8pq -n payments --tail=5', delay: 1700 },
+          { cls: 'tl-warn',   text: 'FATAL: listen tcp 0.0.0.0:9999: bind: address already in use',      delay: 2150 },
+          { cls: 'tl-warn',   text: 'FATAL: listen tcp 0.0.0.0:9999: bind: address already in use',      delay: 2250 },
+          { cls: 'tl-warn',   text: 'FATAL: listen tcp 0.0.0.0:9999: bind: address already in use',      delay: 2350 },
+          { cls: 'term-blank', delay: 2550 },
+          { cls: 'tl-cmd',    text: 'kubectl delete pod payment-service-7d9f8b6c5-xk8pq -n payments',    delay: 2750 },
+          { cls: 'tl-out',    text: 'pod "payment-service-7d9f8b6c5-xk8pq" deleted',                     delay: 3300 },
+          { cls: 'term-blank', delay: 3500 },
+          { cls: 'tl-cmd',    text: 'kubectl get pods -n payments -w',                                   delay: 3700 },
+          { cls: 'tl-head',   text: 'NAME                                  READY   STATUS              RESTARTS   AGE', delay: 4050 },
+          { cls: 'tl-out',    text: 'payment-service-7d9f8b6c5-xk8pq      0/1     Terminating         14         48m', delay: 4200 },
+          { cls: 'tl-out',    text: 'payment-service-7d9f8b6c5-r4nms      0/1     Pending             0          3s',  delay: 4700 },
+          { cls: 'tl-out',    text: 'payment-service-7d9f8b6c5-r4nms      0/1     ContainerCreating   0          4s',  delay: 5200 },
+          { cls: 'tl-out',    text: 'payment-service-7d9f8b6c5-xk8pq      0/1     Terminating         14         48m', delay: 5500 },
+          { cls: 'tl-ok',     text: 'payment-service-7d9f8b6c5-r4nms      1/1     Running             0          8s',  delay: 6100 },
+          { cls: 'term-blank', delay: 6400 },
+          { cls: 'tl-cmd',    text: 'kubectl exec payment-service-7d9f8b6c5-r4nms -n payments -- nc -zv localhost 9999', delay: 6600 },
+          { cls: 'tl-ok',     text: 'Connection to localhost (10.103.136.237) 9999 port [tcp] succeeded!', delay: 7200 },
+          { cls: 'term-blank', delay: 7400 },
+          { cls: 'tl-ok',     text: '✓ Port 9999 bound and accepting connections',                        delay: 7600 },
+          { cls: 'tl-ok',     text: '✓ gRPC placeOrder: 0 errors in last 60s',                           delay: 7900 },
+          { cls: 'tl-ok',     text: '✓ Incident resolved — 0 alerts firing',                             delay: 8200 },
+        ];
+
+        LINES.forEach(function(line) {
+          setTimeout(function() {
+            var el = document.createElement('div');
+            el.className = 'term-line ' + line.cls;
+            if (line.cls !== 'term-blank') el.textContent = line.text;
+            termBody.appendChild(el);
+            termBody.scrollTop = termBody.scrollHeight;
+          }, line.delay);
+        });
+
+        var STATUSES = [
+          { delay: 500,  text: '⚙ Inspecting pods and logs in payments namespace...', done: false },
+          { delay: 2850, text: '⚙ Deleting CrashLoopBackOff pod — triggering clean restart...', done: false },
+          { delay: 5300, text: '⚙ Monitoring pod recovery...', done: false },
+          { delay: 8400, text: '✅ Incident resolved. payment-service healthy — port 9999 responding. 0 alerts firing.', done: true },
+        ];
+
+        STATUSES.forEach(function(s) {
+          setTimeout(function() {
+            var el = document.createElement('div');
+            el.className = 'msg-status' + (s.done ? ' done' : '');
+            el.textContent = s.text;
+            chatConvo.appendChild(el);
+            requestAnimationFrame(function() { el.classList.add('show'); scrollBottom(); });
+          }, s.delay);
+        });
+
+        setTimeout(function() {
+          var thinkEl = document.createElement('div');
+          thinkEl.className = 'msg-reasoning';
+          thinkEl.innerHTML = '<span class="reasoning-icon">🧠</span> Generating failure signature for Elastic Brain...';
+          chatConvo.appendChild(thinkEl);
+          requestAnimationFrame(function() { thinkEl.classList.add('show'); scrollBottom(); });
+        }, 9100);
+
+        setTimeout(function() {
+          chatConvo.querySelector('.msg-reasoning:last-child').style.display = 'none';
+
+          var sigEl = document.createElement('div');
+          sigEl.className = 'sig-card';
+          sigEl.innerHTML =
+            '<div class="sig-header">' +
+              '<div class="sig-icon">⚡</div>' +
+              '<div>' +
+                '<div class="sig-title">Failure Signature Captured</div>' +
+                '<div class="sig-sub">Hydrated into Elastic Brain · will match future incidents</div>' +
+              '</div>' +
+              '<div class="sig-brain-badge">🧠 Brain</div>' +
+            '</div>' +
+            '<div class="sig-rows">' +
+              '<div class="sig-row"><span class="sig-key">Service</span><span class="sig-val">payment-service / payments namespace</span></div>' +
+              '<div class="sig-row"><span class="sig-key">Root cause</span><span class="sig-val">Port 9999 bind failure — leaked socket from previous process not released on restart</span></div>' +
+              '<div class="sig-row"><span class="sig-key">Pattern</span><span class="sig-val">CrashLoopBackOff (14×) · gRPC listener failing silently · no port output on netstat</span></div>' +
+              '<div class="sig-row"><span class="sig-key">Fix</span><span class="sig-val">Force pod termination — clean init clears bind conflict, port recovers immediately</span></div>' +
+              '<div class="sig-row"><span class="sig-key">TTR</span><span class="sig-val">8 min · 0 pages sent · team uninterrupted</span></div>' +
+            '</div>' +
+            '<div class="sig-footer">' +
+              '<div class="sig-brain-pulse"></div>' +
+              '<div>' +
+                '<div class="sig-brain-note">✓ Failure signature saved to Elastic Brain</div>' +
+                '<div style="font-size:10px;color:#1D6FF2;margin-top:2px;">Next matching incident auto-resolves in &lt;60s — no human required</div>' +
+              '</div>' +
+            '</div>';
+          chatConvo.appendChild(sigEl);
+          requestAnimationFrame(function() { sigEl.classList.add('show'); scrollBottom(); });
+        }, 9800);
+
+        setTimeout(function() {
+          var savedEl = document.createElement('div');
+          savedEl.className = 'msg-status done';
+          savedEl.textContent = '🧠 Failure signature saved to Elastic Brain.';
+          chatConvo.appendChild(savedEl);
+          requestAnimationFrame(function() { savedEl.classList.add('show'); scrollBottom(); });
+        }, 10600);
+      }
+
+      var approveBtn = document.getElementById('btn-approve');
+      var declineBtn = document.getElementById('btn-decline');
+      if (approveBtn) approveBtn.addEventListener('click', startExecution);
+      if (declineBtn) declineBtn.addEventListener('click', function() {
+        if (!started) {
+          started = true;
+          msgAction.querySelector('.action-btns-row').innerHTML =
+            '<span style="font-size:9px;color:#A0AEC0;">Declined.</span>';
+        }
+      });
+
+      setTimeout(function() {
+        if (!started) {
+          var btn = document.getElementById('btn-approve');
+          if (btn) {
+            btn.style.transition = 'box-shadow 0.1s, transform 0.1s, opacity 0.1s';
+            btn.style.boxShadow = '0 0 0 3px rgba(56,189,248,0.55), 0 0 18px rgba(29,111,242,0.45)';
+            setTimeout(function() {
+              btn.style.transform = 'scale(0.91) translateY(1px)';
+              btn.style.opacity = '0.65';
+              setTimeout(function() {
+                btn.style.transform = '';
+                btn.style.opacity = '';
+                btn.style.boxShadow = '';
+                setTimeout(function() { btn.click(); }, 160);
+              }, 170);
+            }, 130);
+          }
+        }
+      }, 2000);
+    }
+
+    function resetAll() {
+      [viewOverview, viewChat].forEach(function(v) { if (v) v.classList.remove('active'); });
+      if (termPanel) { termPanel.classList.remove('open'); termBody.innerHTML = ''; }
+      if (ctxEl) { ctxEl.style.flexShrink = ''; ctxEl.style.width = ''; ctxEl.style.opacity = ''; }
+      if (chatConvo) chatConvo.innerHTML = '';
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      bgRunning = false;
+      agentRunning = false;
+      bgPanel.style.display = 'none';
+      agentPanel.style.display = 'none';
+      frameWrap.style.display = '';
+      conversationRunning = false;
+      remediationScheduled = false;
+      if (detailPanel) detailPanel.classList.remove('open');
+    }
+
+    function switchToMode(modeIdx) {
+      var mode = MODES[modeIdx];
+      document.querySelectorAll('.mode-pill').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelector('[data-mode="' + mode + '"]').classList.add('active');
+      resetAll();
+
+      if (mode === 'chat') {
+        if (ctxEl) ctxEl.style.display = '';
+        viewOverview.classList.add('active');
+        browserUrl.textContent = 'app/observability/nightshift/overview';
+      } else if (mode === 'background') {
+        if (ctxEl) ctxEl.style.display = 'none';
+        frameWrap.style.display = 'none';
+        bgPanel.style.display = 'flex';
+        document.getElementById('hl-events').innerHTML = '';
+        document.getElementById('hl-term-bg').innerHTML = '';
+        document.getElementById('hl-elapsed').textContent = '00:00';
+        setTimeout(runBackgroundMode, 400);
+      } else if (mode === 'agent') {
+        if (ctxEl) ctxEl.style.display = 'none';
+        frameWrap.style.display = 'none';
+        agentPanel.style.display = 'flex';
+        document.getElementById('agent-body').innerHTML = '';
+        setTimeout(runAgentMode, 400);
+      }
+    }
+
+    document.querySelectorAll('.mode-pill').forEach(function(pill) {
+      pill.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var mode = this.dataset.mode;
+        var idx = MODES.indexOf(mode);
+        if (idx !== currentModeIdx) {
+          currentModeIdx = idx;
+          switchToMode(currentModeIdx);
+        }
+      });
+    });
+
+    function runBackgroundMode() {
+      if (bgRunning) return;
+      bgRunning = true;
+
+      var eventsEl = document.getElementById('hl-events');
+      var termEl   = document.getElementById('hl-term-bg');
+      var elapsedEl = document.getElementById('hl-elapsed');
+      var t0 = Date.now();
+
+      timerInterval = setInterval(function() {
+        if (MODES[currentModeIdx] !== 'background') { clearInterval(timerInterval); return; }
+        var s = Math.floor((Date.now() - t0) / 1000);
+        elapsedEl.textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+      }, 1000);
+
+      var EVENTS = [
+        { delay: 300,  cls: 'hl-ev-err', text: '🔴 Incident detected: payment-service CrashLoopBackOff (14 restarts)' },
+        { delay: 800,  cls: 'hl-ev-hi',  text: '🧠 Blast radius: 3 downstream services affected' },
+        { delay: 1400, cls: 'hl-ev-hi',  text: '🔍 Root cause: port 9999 bind failure — leaked socket' },
+        { delay: 2000, cls: 'hl-ev',     text: '⚙ Remediation: kubectl delete pod → monitor recovery' },
+        { delay: 2600, cls: 'hl-ev',     text: '⚙ Deleting pod payment-service-7d9f8b6c5-xk8pq...' },
+        { delay: 3500, cls: 'hl-ev',     text: '🔄 New pod scheduled: payment-service-7d9f8b6c5-r4nms' },
+        { delay: 5800, cls: 'hl-ev',     text: '⟳ Verifying port 9999 connectivity...' },
+        { delay: 7200, cls: 'hl-ev-ok',  text: '✓ payment-service healthy — port 9999 responding' },
+        { delay: 7600, cls: 'hl-ev-ok',  text: '✓ Resolved in 7m · 0 pages sent · team uninterrupted' },
+        { delay: 8000, cls: 'hl-ev-ok',  text: '🧠 Failure signature saved to Elastic Brain' },
+      ];
+
+      EVENTS.forEach(function(ev) {
+        setTimeout(function() {
+          if (MODES[currentModeIdx] !== 'background') return;
+          var now = new Date();
+          var ts = [now.getHours(), now.getMinutes(), now.getSeconds()].map(function(n){return String(n).padStart(2,'0');}).join(':');
+          var el = document.createElement('div');
+          el.className = 'hl-event';
+          el.innerHTML = '<span class="hl-ts">' + ts + '</span><span class="' + ev.cls + '">' + ev.text + '</span>';
+          eventsEl.appendChild(el);
+          eventsEl.scrollTop = eventsEl.scrollHeight;
+        }, ev.delay);
+      });
+
+      var BG_LINES = [
+        { cls: 'tl-cmd',    text: 'kubectl get pods -n payments',                                          delay: 500 },
+        { cls: 'tl-head',   text: 'NAME                                  READY   STATUS            RESTARTS   AGE', delay: 950 },
+        { cls: 'tl-err',    text: 'payment-service-7d9f8b6c5-xk8pq      0/1     CrashLoopBackOff  14         47m', delay: 1050 },
+        { cls: 'tl-out',    text: 'checkout-service-6b4d9f7c8-wl3rt      1/1     Running           0          2h',  delay: 1150 },
+        { cls: 'term-blank', delay: 1400 },
+        { cls: 'tl-cmd',    text: 'kubectl logs payment-service-7d9f8b6c5-xk8pq --tail=3',                delay: 1600 },
+        { cls: 'tl-warn',   text: 'FATAL: listen tcp 0.0.0.0:9999: bind: address already in use',         delay: 2000 },
+        { cls: 'term-blank', delay: 2200 },
+        { cls: 'tl-cmd',    text: 'kubectl delete pod payment-service-7d9f8b6c5-xk8pq -n payments',       delay: 2500 },
+        { cls: 'tl-out',    text: 'pod "payment-service-7d9f8b6c5-xk8pq" deleted',                        delay: 3100 },
+        { cls: 'term-blank', delay: 3300 },
+        { cls: 'tl-cmd',    text: 'kubectl get pods -n payments -w',                                      delay: 3500 },
+        { cls: 'tl-out',    text: 'payment-service-7d9f8b6c5-r4nms      0/1     ContainerCreating   0     4s', delay: 4000 },
+        { cls: 'tl-ok',     text: 'payment-service-7d9f8b6c5-r4nms      1/1     Running             0     8s', delay: 5700 },
+        { cls: 'term-blank', delay: 6000 },
+        { cls: 'tl-ok',     text: '✓ Port 9999 responding',                                               delay: 6300 },
+        { cls: 'tl-ok',     text: '✓ Incident resolved — 0 alerts firing',                               delay: 6600 },
+      ];
+
+      BG_LINES.forEach(function(line) {
+        setTimeout(function() {
+          if (MODES[currentModeIdx] !== 'background') return;
+          var el = document.createElement('div');
+          el.className = 'term-line ' + line.cls;
+          if (line.cls !== 'term-blank') el.textContent = line.text;
+          termEl.appendChild(el);
+          termEl.scrollTop = termEl.scrollHeight;
+        }, line.delay);
+      });
+    }
+
+    function runAgentMode() {
+      if (agentRunning) return;
+      agentRunning = true;
+
+      var bodyEl = document.getElementById('agent-body');
+
+      bodyEl.innerHTML =
+        '<div class="cc-startup">' +
+          '<div class="cc-icon">' +
+            '<svg width="20" height="20" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">' +
+              '<rect x="3" y="0" width="4" height="1" fill="#E07840"/>' +
+              '<rect x="1" y="1" width="2" height="1" fill="#E07840"/>' +
+              '<rect x="7" y="1" width="2" height="1" fill="#E07840"/>' +
+              '<rect x="0" y="2" width="10" height="6" fill="#E07840"/>' +
+              '<rect x="1" y="8" width="2" height="1" fill="#E07840"/>' +
+              '<rect x="7" y="8" width="2" height="1" fill="#E07840"/>' +
+              '<rect x="3" y="9" width="4" height="1" fill="#E07840"/>' +
+              '<rect x="2" y="3" width="2" height="2" fill="#F5A870"/>' +
+              '<rect x="6" y="3" width="2" height="2" fill="#F5A870"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="cc-info">' +
+            '<div class="cc-name">Claude Code<span class="cc-ver">v2.1.129</span></div>' +
+            '<div class="cc-model">Opus 4.7 (1M context) · Claude Enterprise</div>' +
+            '<div class="cc-dir">~/Dev/project_nightshift</div>' +
+          '</div>' +
+        '</div>';
+
+      var LINES = [
+        { cls: 'at-text', text: '> Nightshift SRE monitoring active — watching 14 services across 3 namespaces', delay: 200 },
+        { cls: 'at-blank', delay: 600 },
+        { cls: 'at-tool', text: '● nightshift:detect_incident', delay: 900 },
+        { cls: 'at-out',  text: 'payment-service · CrashLoopBackOff · namespace: payments · restarts: 14', delay: 1200 },
+        { cls: 'at-blank', delay: 1450 },
+        { cls: 'at-text', text: 'Incident detected. Analyzing root cause...', delay: 1700 },
+        { cls: 'at-blank', delay: 2000 },
+        { cls: 'at-tool', text: '● nightshift:kubectl_get_pods', delay: 2200 },
+        { cls: 'at-out',  text: 'payment-service-7d9f8b6c5-xk8pq  0/1  CrashLoopBackOff  14  47m', delay: 2500 },
+        { cls: 'at-blank', delay: 2700 },
+        { cls: 'at-tool', text: '● nightshift:kubectl_logs', delay: 2900 },
+        { cls: 'at-out',  text: 'FATAL: listen tcp 0.0.0.0:9999: bind: address already in use', delay: 3200 },
+        { cls: 'at-out',  text: 'FATAL: listen tcp 0.0.0.0:9999: bind: address already in use', delay: 3300 },
+        { cls: 'at-blank', delay: 3550 },
+        { cls: 'at-text', text: 'Root cause confirmed: port 9999 bind failure — leaked socket from previous process.', delay: 3800 },
+        { cls: 'at-text', text: 'Fix: force pod termination. Clean init will release the bind conflict.', delay: 4100 },
+        { cls: 'at-blank', delay: 4400 },
+        { cls: 'at-tool', text: '● nightshift:kubectl_delete_pod', delay: 4600 },
+        { cls: 'at-out',  text: 'pod "payment-service-7d9f8b6c5-xk8pq" deleted', delay: 5000 },
+        { cls: 'at-blank', delay: 5200 },
+        { cls: 'at-tool', text: '● nightshift:kubectl_watch_pods', delay: 5400 },
+        { cls: 'at-out',  text: 'payment-service-7d9f8b6c5-r4nms  0/1  ContainerCreating  0  3s', delay: 5800 },
+        { cls: 'at-out',  text: 'payment-service-7d9f8b6c5-r4nms  1/1  Running            0  8s', delay: 7200 },
+        { cls: 'at-blank', delay: 7500 },
+        { cls: 'at-tool', text: '● nightshift:verify_connectivity', delay: 7700 },
+        { cls: 'at-out',  text: 'Connection to 10.103.136.237:9999 succeeded', delay: 8100 },
+        { cls: 'at-blank', delay: 8400 },
+        { cls: 'at-ok',   text: '✓ Incident resolved · TTR: 8 min · 0 pages sent', delay: 8700 },
+        { cls: 'at-ok',   text: '🧠 Failure signature saved to Elastic Brain', delay: 9100 },
+      ];
+
+      LINES.forEach(function(line) {
+        setTimeout(function() {
+          if (MODES[currentModeIdx] !== 'agent') return;
+          var el = document.createElement('div');
+          el.className = 'at-line ' + line.cls;
+          if (line.cls !== 'at-blank') el.textContent = line.text;
+          bodyEl.appendChild(el);
+          bodyEl.scrollTop = bodyEl.scrollHeight;
+        }, line.delay);
+      });
+    }
+
+    (function() {
+      var step = 0;
+      var TOTAL = 3;
+      var FORWARD = ['ArrowRight', 'Space', 'PageDown'];
+      var BACK    = ['ArrowLeft', 'PageUp'];
+
+      function clickRemediate(then) {
+        var remBtn = document.getElementById('btn-remediate-chat');
+        if (!remBtn) { then(); return; }
+        remBtn.style.transition = 'box-shadow 0.1s, transform 0.1s, opacity 0.1s';
+        remBtn.style.boxShadow = '0 0 0 3px rgba(196,181,253,0.65), 0 0 18px rgba(56,189,248,0.45)';
+        setTimeout(function() {
+          remBtn.style.transform = 'scale(0.91) translateY(1px)';
+          remBtn.style.opacity = '0.65';
+          setTimeout(function() {
+            remBtn.style.transform = '';
+            remBtn.style.opacity = '';
+            remBtn.style.boxShadow = '';
+            setTimeout(then, 160);
+          }, 170);
+        }, 130);
+      }
+
+      function handleSlideKey(key) {
+        if (FORWARD.indexOf(key) !== -1 && step < TOTAL) {
+          step++;
+          if (step === 1) {
+            clickRemediate(showChat);
+          } else if (step === 2) {
+            currentModeIdx = 1; switchToMode(1);
+          } else if (step === 3) {
+            currentModeIdx = 2; switchToMode(2);
+          }
+          if (step >= TOTAL && window.parent !== window) {
+            window.parent.postMessage({ type: 'nav-unlock' }, '*');
+          }
+        } else if (BACK.indexOf(key) !== -1 && step > 0) {
+          if (step >= TOTAL && window.parent !== window) {
+            window.parent.postMessage({ type: 'nav-lock' }, '*');
+          }
+          step--;
+          if (step === 0) {
+            currentModeIdx = 0; switchToMode(0);
+          } else if (step === 1) {
+            currentModeIdx = 0;
+            switchToMode(0);
+            setTimeout(function() { clickRemediate(showChat); }, 200);
+          } else if (step === 2) {
+            currentModeIdx = 1; switchToMode(1);
+          }
+        }
+      }
+
+      // Keys forwarded from player (normal case — parent page has focus)
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'player-keydown') handleSlideKey(e.data.key);
+      });
+
+      // Keys when iframe itself has focus (direct use / standalone)
+      window.addEventListener('keydown', function(e) {
+        var key = e.code || e.key;
+        var consumable = (FORWARD.indexOf(key) !== -1 && step < TOTAL) ||
+                         (BACK.indexOf(key)    !== -1 && step > 0);
+        if (consumable) { e.stopImmediatePropagation(); handleSlideKey(key); }
+      }, { capture: true });
+
+      // Tell player to hold navigation — this slide drives its own steps
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'nav-lock' }, '*');
+      }
+    })();
+
+    switchToMode(0);
+  })();
+  </script>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

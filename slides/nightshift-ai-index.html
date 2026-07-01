@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Context Layer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #050D1A;
+      color: #fff;
+      display: flex; flex-direction: column;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(rgba(56,189,248,0.09) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -15%; left: -5%;
+      width: 55%; height: 70%;
+      background: radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    @keyframes fade-up { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none} }
+    @keyframes fade-in { from{opacity:0}to{opacity:1} }
+
+    .top-bar {
+      flex-shrink: 0;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding: 17px 45px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fade-up 0.4s ease forwards;
+    }
+    .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 0.2rem; }
+    .bar-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+    .bar-title .hl { background: linear-gradient(135deg,#38BDF8,#BAE6FD); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .bar-sub { font-size: 11px; color: rgba(255,255,255,0.38); font-weight: 400; margin-top: 0.15rem; }
+
+    .main {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: center;
+      padding: 18px 45px;
+      gap: 0;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.2s;
+    }
+
+    .diagram {
+      width: 100%; max-width: 936px;
+      display: flex; flex-direction: column;
+    }
+
+    .ai-index-box {
+      border: 1px solid rgba(56,189,248,0.5);
+      border-radius: 12px;
+      background: rgba(56,189,248,0.04);
+      box-shadow: 0 0 28px rgba(56,189,248,0.07);
+      padding: 19px 31px;
+      text-align: center;
+    }
+    .aib-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+      color: #38BDF8; margin-bottom: 0.4rem;
+    }
+    .aib-title {
+      font-size: 19px; font-weight: 800; color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .aib-sub {
+      font-size: 13px; color: rgba(255,255,255,0.38);
+      margin-bottom: 0.65rem;
+    }
+    .aib-tags { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
+    .aib-tag {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+      padding: 4px 13px; border-radius: 6px;
+      background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2);
+      color: #BAE6FD;
+    }
+
+    .wedge-arrows {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 31px;
+      padding: 11px 0;
+    }
+    .arrow-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .arrow-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+      color: rgba(255,255,255,0.2); text-align: center;
+    }
+    .arrow-line {
+      width: 1px; height: 31px;
+      background: linear-gradient(to top, rgba(56,189,248,0.5), transparent);
+      position: relative;
+    }
+    .arrow-line::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      border-left: 4px solid transparent; border-right: 4px solid transparent;
+      border-bottom: 6px solid rgba(56,189,248,0.55);
+    }
+
+    .wedge-lower { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .wedge-panel {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      padding: 17px 19px;
+    }
+    .wedge-panel.left  { border-color: rgba(56,189,248,0.22); }
+    .wedge-panel.right { border-color: rgba(255,255,255,0.08); }
+
+    .wp-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+    .wedge-panel.left  .wp-label { color: #38BDF8; }
+    .wedge-panel.right .wp-label { color: rgba(255,255,255,0.35); }
+    .wp-sub {
+      font-size: 13px; color: rgba(255,255,255,0.38); line-height: 1.5;
+      margin-bottom: 0.7rem;
+    }
+    .wp-sub strong { color: rgba(255,255,255,0.65); }
+
+    .source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .source-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 7px; padding: 10px 13px;
+    }
+    .wedge-panel.left  .source-card { border-color: rgba(56,189,248,0.12); }
+    .sc-name {
+      font-size: 14px; font-weight: 700; margin-bottom: 2px;
+    }
+    .wedge-panel.left  .sc-name { color: #BAE6FD; }
+    .wedge-panel.right .sc-name { color: rgba(255,255,255,0.72); }
+    .sc-note { font-size: 11px; color: rgba(255,255,255,0.28); line-height: 1.35; }
+
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div>
+      <div class="eyebrow">Context Layer · Nightshift</div>
+      <div class="bar-title">The <span class="hl">Context Layer</span> above every O11y stack.</div>
+      <div class="bar-sub">The Context Layer connects to the monitoring tools and data stores already in your environment — no migration required.</div>
+    </div>
+  </div>
+
+  <div class="main">
+  <div class="diagram">
+
+    <div class="ai-index-box">
+      <div class="aib-label">Elastic · Context Layer</div>
+      <div class="aib-title">Failure Signatures · Knowledge Indicators · System Model · Pattern Library</div>
+      <div class="aib-sub">Accumulated intelligence built from every telemetry source you own</div>
+      <div class="aib-tags">
+        <span class="aib-tag">Failure Signatures</span>
+        <span class="aib-tag">Fix Outcomes</span>
+        <span class="aib-tag">Pattern Library</span>
+        <span class="aib-tag">Knowledge Indicators</span>
+        <span class="aib-tag">System Model</span>
+        <span class="aib-tag">Service Topology</span>
+        <span class="aib-tag">Dependencies</span>
+        <span class="aib-tag">Anomaly Events</span>
+      </div>
+    </div>
+
+    <div class="wedge-arrows">
+      <div class="arrow-col">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">Raw telemetry → KI extraction · system model</div>
+      </div>
+      <div class="arrow-col">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">Alerts &amp; events → signal augmentation</div>
+      </div>
+    </div>
+
+    <div class="wedge-lower">
+
+      <div class="wedge-panel left">
+        <div class="wp-label">Telemetry Datastores</div>
+        <div class="wp-sub"><strong>Data stays where it is.</strong> We read directly from any store.</div>
+        <div class="source-grid">
+          <div class="source-card">
+            <div class="sc-name">Elasticsearch</div>
+            <div class="sc-note">primary store · full fidelity</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">S3</div>
+            <div class="sc-note">log archives · cold telemetry</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">Databricks</div>
+            <div class="sc-note">lakehouse · structured events</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">BigQuery</div>
+            <div class="sc-note">analytics · GCP telemetry</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wedge-panel right">
+        <div class="wp-label">External Monitoring Signals</div>
+        <div class="wp-sub"><strong>No migration.</strong> We read alerts and anomalies directly from your existing stack.</div>
+        <div class="source-grid">
+          <div class="source-card">
+            <div class="sc-name">Datadog</div>
+            <div class="sc-note">metrics, alerts, dashboards</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">Grafana</div>
+            <div class="sc-note">dashboards, Loki logs</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">CloudWatch</div>
+            <div class="sc-note">AWS logs &amp; metrics</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">Dynatrace</div>
+            <div class="sc-note">traces, APM alerts</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- diagram -->
+  </div><!-- main -->
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

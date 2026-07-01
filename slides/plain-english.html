@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Talk to your systems in plain English</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #EEF1F8;
+      color: #0F1724;
+    }
+
+    @keyframes fade-up { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }
+    @keyframes blink   { 0%,100%{opacity:1}50%{opacity:0} }
+    @keyframes fade-in { from{opacity:0}to{opacity:1} }
+
+    .slide {
+      width: 1280px; height: 720px;
+      display: flex; flex-direction: column;
+      padding: 36px 60px 28px;
+      position: relative;
+    }
+
+    /* ── Header ── */
+    .hdr { text-align: center; margin-bottom: 26px; }
+    .h-title { font-size: 46px; font-weight: 900; letter-spacing: -0.035em; line-height: 1.1; color: #0F1724; }
+    .h-title em { font-style: normal; color: #006BB8; }
+    .h-sub { font-size: 17px; color: #5C6680; margin-top: 7px; font-weight: 400; }
+
+    /* ── Content row ── */
+    .content { flex: 1; min-height: 0; display: flex; gap: 44px; align-items: center; }
+
+    /* ── Features ── */
+    .features { flex: 0 0 460px; display: flex; flex-direction: column; gap: 26px; }
+    .feature { display: flex; gap: 16px; align-items: flex-start; }
+    .feat-icon {
+      flex-shrink: 0; width: 46px; height: 46px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .feat-title { font-size: 17px; font-weight: 700; color: #0F1724; margin-bottom: 4px; }
+    .feat-desc { font-size: 13.5px; color: #5C6680; line-height: 1.55; }
+
+    /* ── Window wrap ── */
+    .win-wrap { flex: 1; min-height: 0; }
+
+    .claude-win {
+      width: 100%; height: 100%;
+      background: #1A1B1E;
+      border-radius: 13px; overflow: hidden;
+      box-shadow: 0 24px 72px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.15);
+      display: flex; flex-direction: column;
+    }
+
+    /* macOS bar */
+    .win-bar {
+      flex-shrink: 0; height: 37px;
+      background: #252628;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; padding: 0 13px;
+      position: relative;
+    }
+    .tl-row { display: flex; gap: 6px; }
+    .tl { width: 12px; height: 12px; border-radius: 50%; }
+    .win-bar-title {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      font-size: 11.5px; color: rgba(255,255,255,0.42);
+      font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Chat */
+    .chat { flex: 1; min-height: 0; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+
+    .msg-u {
+      align-self: flex-end; max-width: 80%;
+      background: #1F3D72;
+      border-radius: 13px 13px 3px 13px;
+      padding: 9px 13px; font-size: 12.5px; line-height: 1.5;
+      color: rgba(255,255,255,0.88);
+      opacity: 0; transform: translateY(5px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .msg-u.show { opacity: 1; transform: none; }
+
+    .msg-tool {
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px; padding: 6px 11px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: #4ED24E; white-space: nowrap; overflow: hidden;
+      opacity: 0; transition: opacity 0.2s ease;
+    }
+    .msg-tool.show { opacity: 1; }
+
+    .cursor-blink {
+      display: inline-block; width: 6px; height: 11px;
+      background: #4ED24E; vertical-align: text-bottom; margin-left: 1px;
+      animation: blink 0.65s step-end infinite;
+    }
+
+    .msg-ai {
+      font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.5;
+      opacity: 0; transform: translateY(4px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .msg-ai.show { opacity: 1; transform: none; }
+
+    /* Result card */
+    .result-card {
+      background: #212226; border-radius: 9px; padding: 13px 15px;
+      border: 1px solid rgba(255,255,255,0.07);
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .result-card.show { opacity: 1; transform: none; }
+
+    .card-row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+    .card-anom { font-size: 13.5px; font-weight: 700; color: #FF6B9D; }
+    .sev-tag { font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; border-radius: 4px; padding: 2px 8px; }
+    .sev-critical { background: #D93636; color: #fff; }
+    .sev-major    { background: #C47A10; color: #fff; }
+
+    .card-entity { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.88); margin-bottom: 2px; }
+    .card-meta { font-size: 9.5px; font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.25); margin-bottom: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 20px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+    .stat-lbl { font-size: 9.5px; color: rgba(255,255,255,0.32); margin-bottom: 2px; }
+    .stat-val { font-size: 21px; font-weight: 800; color: #fff; line-height: 1; }
+
+    /* Elastic logo */
+    .elastic-logo { position: absolute; bottom: 20px; right: 42px; display: flex; align-items: center; gap: 6px; opacity: 0.3; }
+    .elastic-logo svg { width: 18px; height: 18px; }
+    .elastic-logo span { font-size: 13px; font-weight: 600; color: #0F1724; }
+  </style>
+</head>
+<body>
+
+<div class="slide">
+
+  <!-- ── Header ── -->
+  <div class="hdr">
+    <div class="h-title">Talk to your systems in <em>plain English</em></div>
+    <div class="h-sub">Get results in plain language, inside your existing Agents and workflows.</div>
+  </div>
+
+  <!-- ── Content ── -->
+  <div class="content">
+
+    <!-- Left: features -->
+    <div class="features">
+
+      <div class="feature">
+        <div class="feat-icon" style="background:#EAF0FE">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="18" height="6" rx="2.5" fill="#2563EB"/>
+            <rect x="3" y="12" width="7" height="9" rx="2.5" fill="#2563EB" opacity="0.5"/>
+            <rect x="13" y="12" width="8" height="9" rx="2.5" fill="#2563EB"/>
+          </svg>
+        </div>
+        <div>
+          <div class="feat-title">Native MCP server</div>
+          <div class="feat-desc">Connect any Claude-compatible client directly to your Elastic cluster.</div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feat-icon" style="background:#EAFAF2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z" fill="#059669"/>
+            <path d="M19 16L19.9 18.1L22 19L19.9 19.9L19 22L18.1 19.9L16 19L18.1 18.1L19 16Z" fill="#059669" opacity="0.55"/>
+          </svg>
+        </div>
+        <div>
+          <div class="feat-title">Skills loaded automatically</div>
+          <div class="feat-desc">Significant Events RCA, anomaly detection, and remediation — always available.</div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feat-icon" style="background:#F3EEFF">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="8" height="8" rx="2.5" fill="#7C3AED"/>
+            <rect x="13" y="3" width="8" height="8" rx="2.5" fill="#7C3AED" opacity="0.45"/>
+            <rect x="3" y="13" width="8" height="8" rx="2.5" fill="#7C3AED" opacity="0.45"/>
+            <rect x="13" y="13" width="8" height="8" rx="2.5" fill="#7C3AED"/>
+          </svg>
+        </div>
+        <div>
+          <div class="feat-title">Surface-aware rendering</div>
+          <div class="feat-desc">Results rendered as rich cards, not raw JSON — built for the interface you're using.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: Claude window -->
+    <div class="win-wrap">
+      <div class="claude-win">
+        <div class="win-bar">
+          <div class="tl-row">
+            <div class="tl" style="background:#FF5F57"></div>
+            <div class="tl" style="background:#FFBD2E"></div>
+            <div class="tl" style="background:#28C940"></div>
+          </div>
+          <div class="win-bar-title" id="win-title">K8s-Agentic-Investigation — Claude</div>
+        </div>
+        <div class="chat">
+          <div class="msg-u"   id="msg-u"></div>
+          <div class="msg-tool" id="msg-tool"></div>
+          <div class="msg-ai"  id="msg-ai"></div>
+          <div class="result-card" id="result-card">
+            <div class="card-row1">
+              <div class="card-anom" id="c-anom"></div>
+              <div class="sev-tag"   id="c-sev"></div>
+            </div>
+            <div class="card-entity" id="c-entity"></div>
+            <div class="card-meta"   id="c-meta"></div>
+            <div class="stats">
+              <div><div class="stat-lbl">Anomaly score</div><div class="stat-val" id="s-score"></div></div>
+              <div><div class="stat-lbl" id="s2-lbl"></div><div class="stat-val" id="s2-val"></div></div>
+              <div><div class="stat-lbl" id="s3-lbl"></div><div class="stat-val" id="s3-val"></div></div>
+              <div><div class="stat-lbl">Deviation</div><div class="stat-val" id="s-dev"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Elastic logo -->
+  <div class="elastic-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <path d="M16 4C10.477 4 6 8.477 6 14c0 2.39.84 4.586 2.236 6.314L6 22l2.314-1.686A9.956 9.956 0 0016 24c5.523 0 10-4.477 10-10S21.523 4 16 4z" fill="#FEB118"/>
+      <path d="M8.236 20.314A9.964 9.964 0 016 14c0 3.313 1.61 6.247 4.1 8.1l-1.864-1.786z" fill="#00BFB3"/>
+      <ellipse cx="16" cy="14" rx="6" ry="6" fill="#0077CC"/>
+    </svg>
+    <span>elastic</span>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var SCENARIOS = [
+    {
+      query: 'Call forge_ml_anomalies with entity "frontend" and lookback "1h". Ignore chaos* anomalies. Show using anomaly-explainer app.',
+      tool: '> forge_ml_anomalies entity: frontend · lookback: 1h',
+      response: 'Got the data. Now let me render it in the anomaly-explainer app.',
+      anom: 'k8s-pod-memory-growth',
+      sev: 'CRITICAL', sevCls: 'sev-critical',
+      entity: 'frontend-7847f66d84-27cfw',
+      meta: 'oteldemo-esvox-default · mean(metrics.k8s.pod.memory.working_set)',
+      score: 96.2,
+      s2l: 'Actual memory',  s2v: '104.5 MB',
+      s3l: 'Typical memory', s3v: '75.5 MB',
+      dev: '+38.4%',
+    },
+    {
+      query: 'Check the checkout service for CPU anomalies in the last 30m. Render as an anomaly-explainer card.',
+      tool: '> forge_ml_anomalies entity: checkout · lookback: 30m',
+      response: 'High-confidence anomaly found. Rendering the result card now.',
+      anom: 'k8s-cpu-throttling',
+      sev: 'MAJOR', sevCls: 'sev-major',
+      entity: 'checkout-api-6c9d7f8b5-xm2pk',
+      meta: 'prod-us · mean(metrics.k8s.container.cpu.node.utilization)',
+      score: 78.5,
+      s2l: 'Actual CPU',  s2v: '89.2%',
+      s3l: 'Typical CPU', s3v: '41.0%',
+      dev: '+117.6%',
+    },
+    {
+      query: 'Investigate payments service. Show the top ML anomaly detected in the last hour.',
+      tool: '> forge_ml_anomalies entity: payments · lookback: 1h',
+      response: 'Critical memory pattern detected. Rendering anomaly explainer.',
+      anom: 'k8s-oom-kill-rate',
+      sev: 'CRITICAL', sevCls: 'sev-critical',
+      entity: 'payments-svc-7f4b9cd88-p9ktr',
+      meta: 'prod-us-east · mean(metrics.k8s.pod.memory.rss)',
+      score: 91.3,
+      s2l: 'Actual RSS',  s2v: '512.0 MB',
+      s3l: 'Typical RSS', s3v: '312.0 MB',
+      dev: '+64.1%',
+    },
+  ];
+
+  var idx = 0;
+  var loopTimer = null;
+
+  function getEl(id) { return document.getElementById(id); }
+
+  function reset() {
+    getEl('msg-u').classList.remove('show');
+    getEl('msg-tool').classList.remove('show');
+    getEl('msg-ai').classList.remove('show');
+    getEl('result-card').classList.remove('show');
+    getEl('msg-tool').innerHTML = '';
+  }
+
+  function fadeOutAll(done) {
+    var els = ['msg-u','msg-tool','msg-ai','result-card'];
+    els.forEach(function(id) {
+      var el = getEl(id);
+      el.style.transition = 'opacity 0.5s ease';
+      el.style.opacity = '0';
+    });
+    setTimeout(function() {
+      els.forEach(function(id) {
+        var el = getEl(id);
+        el.style.transition = '';
+        el.style.opacity = '';
+      });
+      if (done) done();
+    }, 520);
+  }
+
+  function runScene() {
+    var s = SCENARIOS[idx % SCENARIOS.length];
+    idx++;
+
+    reset();
+
+    // Populate card content upfront (hidden)
+    getEl('c-anom').textContent = s.anom;
+    var sevEl = getEl('c-sev');
+    sevEl.textContent = s.sev;
+    sevEl.className = 'sev-tag ' + s.sevCls;
+    getEl('c-entity').textContent = s.entity;
+    getEl('c-meta').textContent   = s.meta;
+    getEl('s2-lbl').textContent   = s.s2l;
+    getEl('s3-lbl').textContent   = s.s3l;
+    getEl('s2-val').textContent   = s.s2v;
+    getEl('s3-val').textContent   = s.s3v;
+    getEl('s-score').textContent  = '0';
+    getEl('s-dev').textContent    = '+0%';
+    getEl('msg-u').textContent    = s.query;
+    getEl('msg-ai').textContent   = s.response;
+
+    // Step 1: user message
+    setTimeout(function() {
+      getEl('msg-u').classList.add('show');
+    }, 350);
+
+    // Step 2: tool call typing
+    setTimeout(function() {
+      var toolEl = getEl('msg-tool');
+      toolEl.innerHTML = '';
+      toolEl.classList.add('show');
+      typeText(toolEl, s.tool, 28, function() {
+
+        // Step 3: AI response
+        setTimeout(function() {
+          getEl('msg-ai').classList.add('show');
+        }, 250);
+
+        // Step 4: card + count-ups
+        setTimeout(function() {
+          getEl('result-card').classList.add('show');
+          countUp('s-score', 0, s.score, 900, function(v) { return v.toFixed(1); });
+          countUpDev('s-dev', 0, parseFloat(s.dev), 900);
+        }, 600);
+
+        // Step 5: pause then fade out and loop
+        setTimeout(function() {
+          fadeOutAll(function() {
+            loopTimer = setTimeout(runScene, 300);
+          });
+        }, 6200);
+      });
+    }, 1200);
+  }
+
+  function typeText(el, text, speed, done) {
+    var cur = document.createElement('span');
+    cur.className = 'cursor-blink';
+    el.appendChild(cur);
+    var i = 0;
+    function tick() {
+      if (i < text.length) {
+        cur.insertAdjacentText('beforebegin', text[i]);
+        i++;
+        setTimeout(tick, speed + (Math.random() * 12 - 6));
+      } else {
+        cur.remove();
+        if (done) done();
+      }
+    }
+    tick();
+  }
+
+  function countUp(id, from, to, dur, fmt) {
+    var el = getEl(id);
+    var t0 = performance.now();
+    function tick(now) {
+      var p = Math.min((now - t0) / dur, 1);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function countUpDev(id, from, to, dur) {
+    var el = getEl(id);
+    var t0 = performance.now();
+    function tick(now) {
+      var p = Math.min((now - t0) / dur, 1);
+      var e = 1 - Math.pow(1 - p, 3);
+      var v = from + (to - from) * e;
+      el.textContent = (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  runScene();
+})();
+</script>
+
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>
