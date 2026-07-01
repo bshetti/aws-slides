@@ -19,7 +19,7 @@
     .slide {
       width: 1280px; height: 720px;
       display: flex; flex-direction: column;
-      padding: 48px 66px 24px;
+      padding: 40px 66px 18px;
     }
 
     @keyframes fade-up {
@@ -37,18 +37,17 @@
       line-height: 1.08;
       letter-spacing: -0.02em;
       color: #0D0D0D;
-      margin-bottom: 34px;
+      margin-bottom: 18px;
       opacity: 0;
       animation: fade-up 0.55s ease forwards 0.1s;
     }
-    .title .blue { color: #1D55E0; }
 
     .body {
       flex: 1;
       min-height: 0;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 22px;
+      gap: 20px;
     }
 
     .card {
@@ -67,63 +66,85 @@
 
     .card-header {
       background: #1D55E0;
-      padding: 18px 26px;
-      min-height: 92px;
+      padding: 16px 24px;
+      min-height: 72px;
       display: flex;
       align-items: center;
       flex-shrink: 0;
     }
 
     .card-header-text {
-      font-size: 23px;
+      font-size: 18px;
       font-weight: 700;
       color: #fff;
-      line-height: 1.25;
-      letter-spacing: -0.01em;
+      line-height: 1.35;
     }
 
     .card-body {
       flex: 1;
       min-height: 0;
-      padding: 28px 26px 30px;
+      padding: 11px 18px 12px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 20px;
+      gap: 7px;
     }
 
-    .card-lead {
-      font-size: 15.5px;
+    .card-desc {
+      font-size: 13px;
       font-weight: 400;
-      color: #5A6280;
-      line-height: 1.5;
+      color: #8090B0;
+      line-height: 1.38;
+      padding-bottom: 9px;
+      border-bottom: 1px solid #E2E6F0;
+      flex-shrink: 0;
     }
 
-    .card-metric {
+    .how-block {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .how-list {
+      list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding-top: 20px;
-      border-top: 1px solid #E2E6F0;
+      gap: 6px;
     }
-    .card-metric .big {
-      font-size: 31px;
-      font-weight: 900;
-      color: #1D55E0;
-      letter-spacing: -0.025em;
-      line-height: 1.04;
+
+    .how-list li {
+      font-size: 12.5px;
+      font-weight: 500;
+      line-height: 1.32;
+      color: #2E3348;
+      padding-left: 12px;
+      position: relative;
+      overflow-wrap: break-word;
     }
-    .card-metric .small {
-      font-size: 14px;
+
+    .how-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.48em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #1D55E0;
+    }
+
+    .how-list .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
       font-weight: 600;
-      color: #8090B0;
+      color: #1D55E0;
     }
 
     .footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 12px;
+      padding-top: 8px;
       gap: 20px;
       flex-shrink: 0;
     }
@@ -137,52 +158,77 @@
       line-height: 1.35;
       min-width: 0;
     }
-    .footer-copy a { color: #1D55E0; font-weight: 700; text-decoration: none; }
-    .footer-copy a:hover { text-decoration: underline; }
+
+    .footer-copy a {
+      color: #1D55E0;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .footer-copy a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 <div class="slide">
 
-  <div class="title">Elastic's new <span class="blue">columnar metrics engine.</span></div>
+  <div class="title">Elastic's new columnar metrics engine.</div>
 
   <div class="body">
 
     <div class="card">
       <div class="card-header">
-        <div class="card-header-text">Blazing Fast Query Performance</div>
+        <div class="card-header-text">Blazing Fast Query<br>Performance</div>
       </div>
       <div class="card-body">
-        <div class="card-lead">Delivers faster AI investigations.</div>
-        <div class="card-metric">
-          <span class="big">30× faster</span>
-          <span class="small">than Prometheus &amp; Mimir</span>
+        <div class="card-desc">Delivers faster AI investigations</div>
+        <div class="how-block">
+          <ul class="how-list">
+            <li><span class="mono">TS</span>: inner agg per time series, then aggregated by group using a secondary aggregation function — expresses TS math in one ES|QL pipeline.</li>
+            <li>Sorted <span class="mono">_tsid</span> + time, vectorized + parallel ES|QL — sequential column reads and higher CPU utilization on hot queries.</li>
+            <li>Codec → engine primitive blocks (zero-copy) + constant blocks — fewer copies vs row materialization; less allocator churn.</li>
+            <li>Push down time / dim filters to Lucene skippers — skips non-matching blocks before decode; lower IO and CPU on narrowed ranges.</li>
+            <li><strong><span class="mono">RATE()</span></strong> on ordered <strong><span class="mono">_tsid</span></strong> slices (partitioned by their prefix) + bucket interpolation — correct counter resets and boundary deltas with fewer passes.</li>
+            <li>Sliding windows: bucket partials, then span merge partial results — smoother trend lines without rereading all points each window step.</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <div class="card-header-text">Storage Efficiency Gains</div>
+        <div class="card-header-text">Storage Efficiency Gain</div>
       </div>
       <div class="card-body">
-        <div class="card-lead">Faster root cause. Store more for richer AI context at lower cost.</div>
-        <div class="card-metric">
-          <span class="big">Up to 2.5× more efficient</span>
-          <span class="small">than Prometheus</span>
+        <div class="card-desc">Faster root cause. Store more for richer AI context at lower cost</div>
+        <div class="how-block">
+          <ul class="how-list">
+            <li>Doc-value skippers replace inverted indices + BKD trees on <span class="mono">@timestamp</span> + dims — true columnar files; removes duplicate per field index bulk overhead.</li>
+            <li>Synthetic <span class="mono">_id</span> = <span class="mono">_tsid</span>+<span class="mono">@timestamp</span> with skipper + bloom checks — drops a heavy <span class="mono">_id</span> inverted index metrics rarely need.</li>
+            <li>Trimmed sequence numbers + relaxed OCC on TSDS where concurrent doc updates are uncommon — smaller postings and replication metadata.</li>
+            <li>Numeric codec with 512 byte blocks (was 128) for dimensions with IP/MAC addresses — tighter compression when long runs of those bytes repeat (the 128-wide blocks missed the pattern).</li>
+            <li>Shard route + index sort on <span class="mono">_tsid</span> — keeps each series contiguous on disk so codecs and skippers stay sequential.</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <div class="card-header-text">Native OpenTelemetry Metrics &amp; more</div>
+        <div class="card-header-text">Metrics (OTel and Prometheus)</div>
       </div>
       <div class="card-body">
-        <div class="card-lead">OpenTelemetry-native metrics ingest, with PromQL in Kibana.</div>
-        <div class="card-metric">
-          <span class="big">Native Prometheus</span>
-          <span class="small">same protocol in, same queries</span>
+        <div class="card-desc">Zero friction to switch. Engineers using Grafana feel right at home</div>
+        <div class="how-block">
+          <ul class="how-list">
+            <li>Native OTLP + Prometheus remote-write protobuf — cheaper parse and larger batches than JSON <span class="mono">_bulk</span> translation paths.</li>
+            <li>Coordinator evaluates <span class="mono">_tsid</span> once per indexed document and forwards it — data nodes skip repeating the same dimension-hash / series-id work for every doc.</li>
+            <li>Hash dimensions once per protobuf batch — amortizes <span class="mono">_tsid</span> work across many points in a single network frame.</li>
+            <li>Skipper-backed metric segments — lighter merges vs maintaining hot inverted structures during sustained ingest.</li>
+            <li>Synthetic recovery source — replicate metrics without persisting stored <span class="mono">_source</span>; materially lowers recovery-source disk IO.</li>
+            <li>Same TSDS column files for PromQL + ES|QL — one storage layout powers both surfaces.</li>
+          </ul>
         </div>
       </div>
     </div>

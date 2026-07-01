@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The 3 AM problem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #0B0D12;
+      color: #fff;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.045) 1px, transparent 0);
+      background-size: 26px 26px;
+    }
+
+    .slide {
+      position: relative; z-index: 1;
+      width: 1280px; height: 720px;
+      display: flex; flex-direction: column;
+      padding: 44px 66px 24px;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes tile-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.94); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes buzz {
+      0%,88%,100% { transform: translate(0,0) rotate(0); }
+      90% { transform: translate(-2px,1px) rotate(-0.6deg); }
+      92% { transform: translate(2px,-1px) rotate(0.6deg); }
+      94% { transform: translate(-2px,0) rotate(-0.4deg); }
+      96% { transform: translate(2px,1px) rotate(0.4deg); }
+    }
+    @keyframes flicker {
+      0%,100% { opacity: 0.12; }
+      45% { opacity: 0.32; }
+      55% { opacity: 0.08; }
+      70% { opacity: 0.30; }
+    }
+
+    .label {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35);
+      margin-bottom: 10px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.1s;
+    }
+    .title {
+      font-size: 52px; font-weight: 900; line-height: 1.05;
+      letter-spacing: -0.02em; color: #fff;
+      opacity: 0; animation: fade-up 0.55s ease forwards 0.2s;
+    }
+    .title .red { color: #FF5A5A; }
+
+    .stage {
+      flex: 1; min-height: 0;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* center alert chip */
+    .alert {
+      position: relative; z-index: 5;
+      background: rgba(255,90,90,0.09);
+      border: 1.5px solid rgba(255,90,90,0.55);
+      border-radius: 16px;
+      padding: 26px 40px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(255,90,90,0.18);
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.45s, buzz 3.4s ease-in-out infinite 1.6s;
+    }
+    .alert-status {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #FF5A5A;
+      margin-bottom: 10px;
+    }
+    .alert-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 40px; font-weight: 700; color: #FF7A7A;
+      letter-spacing: -0.01em;
+    }
+    .alert-meta {
+      margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.5);
+    }
+    .alert-meta b { color: #fff; font-weight: 700; }
+
+    /* four disconnected tool tiles */
+    .tile {
+      position: absolute; z-index: 4;
+      width: 210px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 16px 18px;
+      opacity: 0;
+    }
+    .tile .t-name { font-size: 15px; font-weight: 700; color: #E6EAF5; margin-bottom: 4px; }
+    .tile .t-sub  { font-size: 11.5px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+    .tile .t-tag  {
+      display: inline-block; margin-bottom: 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+      color: #7FB0FF; background: rgba(29,85,224,0.16);
+      border-radius: 5px; padding: 2px 7px;
+    }
+    .t1 { top: 40px;  left: 118px;  animation: tile-in 0.5s ease forwards 0.7s; }
+    .t2 { top: 40px;  right: 118px; animation: tile-in 0.5s ease forwards 0.84s; }
+    .t3 { bottom: 34px; left: 118px;  animation: tile-in 0.5s ease forwards 0.98s; }
+    .t4 { bottom: 34px; right: 118px; animation: tile-in 0.5s ease forwards 1.12s; }
+
+    /* broken connector lines that never complete */
+    .broken {
+      position: absolute; z-index: 2;
+      height: 0; border-top: 2px dashed rgba(255,90,90,0.5);
+      animation: flicker 2.6s ease-in-out infinite;
+    }
+    .bl1 { top: 118px; left: 320px;  width: 150px; transform: rotate(24deg);  animation-delay: 0.2s; }
+    .bl2 { top: 118px; right: 320px; width: 150px; transform: rotate(-24deg); animation-delay: 0.6s; }
+    .bl3 { bottom: 112px; left: 320px;  width: 150px; transform: rotate(-24deg); animation-delay: 1.0s; }
+    .bl4 { bottom: 112px; right: 320px; width: 150px; transform: rotate(24deg);  animation-delay: 1.4s; }
+
+    .caption {
+      flex-shrink: 0; text-align: center;
+      font-size: 15px; color: rgba(255,255,255,0.42);
+      padding-top: 4px;
+      opacity: 0; animation: fade-up 0.6s ease forwards 1.4s;
+    }
+    .caption b { color: #fff; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="label">The moment we design for</div>
+  <div class="title">It's 3 AM. A pod is in <span class="red">CrashLoopBackOff.</span></div>
+
+  <div class="stage">
+
+    <div class="broken bl1"></div>
+    <div class="broken bl2"></div>
+    <div class="broken bl3"></div>
+    <div class="broken bl4"></div>
+
+    <div class="tile t1">
+      <span class="t-tag">metrics</span>
+      <div class="t-name">Restart counts</div>
+      <div class="t-sub">147 restarts &middot; climbing</div>
+    </div>
+    <div class="tile t2">
+      <span class="t-tag">k8s events</span>
+      <div class="t-name">Termination reason</div>
+      <div class="t-sub">buried in a fourth tool</div>
+    </div>
+    <div class="tile t3">
+      <span class="t-tag">logs</span>
+      <div class="t-name">The one log line</div>
+      <div class="t-sub">that actually matters</div>
+    </div>
+    <div class="tile t4">
+      <span class="t-tag">traces</span>
+      <div class="t-name">Memory limits</div>
+      <div class="t-sub">in a second dashboard</div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-status">&#9679; Pager &middot; firing</div>
+      <div class="alert-code">CrashLoopBackOff</div>
+      <div class="alert-meta">no shared identity &middot; <b>the human becomes the join key</b></div>
+    </div>
+
+  </div>
+
+  <div class="caption">Four tools, four tabs, none of them correlated. <b>The data exists — nothing connected it for you.</b></div>
+
+</div>
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

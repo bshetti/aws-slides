@@ -108,6 +108,34 @@
     }
     .cover-sub strong { color: #fff; font-weight: 600; }
 
+    /* three doors */
+    .doors {
+      margin-top: 1.6rem;
+      display: flex; flex-direction: column; gap: 12px;
+      max-width: 560px;
+    }
+    .door {
+      display: flex; align-items: baseline; gap: 12px;
+      opacity: 0; transform: translateX(-20px);
+    }
+    .door.d1 { animation: slide-in 0.6s ease forwards 1.25s; }
+    .door.d2 { animation: slide-in 0.6s ease forwards 1.42s; }
+    .door.d3 { animation: slide-in 0.6s ease forwards 1.59s; }
+    .door-tag {
+      flex-shrink: 0; min-width: 148px;
+      font-size: 13px; font-weight: 700; color: #fff;
+    }
+    .door-copy { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.7); line-height: 1.4; }
+    .door-copy b { color: #fff; font-weight: 600; }
+
+    .cover-contact {
+      margin-top: 1.8rem;
+      font-size: 15px; color: rgba(255,255,255,0.6);
+      opacity: 0; transform: translateX(-20px);
+      animation: slide-in 0.6s ease forwards 1.8s;
+    }
+    .cover-contact strong { color: #fff; font-weight: 600; }
+
     @keyframes slide-in {
       to { opacity: 1; transform: translateX(0); }
     }
@@ -147,11 +175,24 @@
   </div>
 
   <div class="content">
-    <div class="cover-label">Elastic Observability</div>
-    <h1 class="cover-title">Thank you.</h1>
-    <p class="cover-sub">
-      Questions? Let's keep the conversation going.<br>
-      <strong>elastic.co/observability</strong>
+    <div class="cover-label">One engine &middot; three doors</div>
+    <h1 class="cover-title">Turn it on.</h1>
+    <div class="doors">
+      <div class="door d1">
+        <span class="door-tag">On Elastic today</span>
+        <span class="door-copy">Enable the K8s integration &mdash; <b>dashboards, alerts, and ML on day one</b>.</span>
+      </div>
+      <div class="door d2">
+        <span class="door-tag">Prometheus / Grafana</span>
+        <span class="door-copy">Point remote-write at us &mdash; <b>live in a day</b>, nothing about your queries changes.</span>
+      </div>
+      <div class="door d3">
+        <span class="door-tag">On Datadog</span>
+        <span class="door-copy">Same cardinality, <b>lower bill</b> &mdash; plus the whole investigation experience.</span>
+      </div>
+    </div>
+    <p class="cover-contact">
+      In an agent? Grab the <strong>Observability MCP app</strong> &middot; <strong>elastic.co/observability</strong>
     </p>
   </div>
 

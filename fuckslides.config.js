@@ -1,133 +1,76 @@
 module.exports = {
-  name: 'customer-preso',
-  title: 'Nightshift — Customer Presentation',
+  name: 'k8s-webinar',
+  title: 'Kubernetes Observability, Reimagined — From Alert to Agentic Root Cause',
   port: 3003,
   slidesDir: 'slides',
 
   slides: [
-    'cover.html',
-    'safe-harbor.html',
-    '00-portfolio.html',
-    '02-track-record.html',
-    '03-platform.html',
-    'logs-pitch.html',
-    'storage.html',
-    'competitive.html',
-    'columnar-metrics-tech.html',
-    'prometheus.html',
-    'promql.html',
-    'kubernetes.html',
-    'mcp-demo.html',
-    'plain-english.html',
-    'migrate.html',
-    '04-transition.html',
-    'world.html',
-    'ai-scale.html',
-    '05-ai-driven.html',
-    '13-otel-collection.html',
-    '06-streams.html',
-    '07-ki-demo.html',
-    'system-model.html',
-    '08-discovery.html',
-    'ns-transition.html',
-    'ns-intro.html',
-    'nightshift-hero.html',
-    'nightshift-architecture.html',
-    'nightshift-capabilities.html',
-    'nightshift-ai-index.html',
-    'nightshift-brain.html',
-    'nightshift-ai-economics.html',
-    'nightshift-live-demo.html',
-    'nightshift-reveal.html',
-    'thank-you.html',
+    'cover.html',                 // 1  retitled → webinar name
+    'safe-harbor.html',           // 2
+    'intro-presenters.html',      // 3  NEW — "Let's talk about K8s investigations"
+    'columnar-metrics-tech.html', // 4  reuse — "Elastic's new columnar metrics engine"
+    'kubernetes.html',            // 5  reuse — the easy button (OOTB K8s)
+    'alert-to-answer.html',       // 6  NEW
+    'workflows.html',             // 7  NEW — Workflows run the investigation (Agents + Skills)
+    'discover-metrics.html',      // 8  NEW — analyze metrics in Discover
+    'mcp-demo.html',              // 9  reuse — agentic / MCP in Claude
+    'demo-transition.html',       // 10 NEW  → LIVE DEMO (Elastic UI, then Claude/MCP)
+    'common-cases.html',          // 11 NEW  (return from demo)
+    'thank-you.html',             // 12 reuse, retitled to CTA / close
   ],
 
   labels: [
     'Cover',
-    'safe-harbor',
-    '00-portfolio',
-    '02-track-record',
-    '03-platform',
-    'logs-pitch',
-    'Storage',
-    'Competitive',
-    'columnar-metrics-tech',
-    'Prometheus',
-    'PromQL',
-    'Kubernetes',
-    'MCP Demo',
-    'Plain English',
-    'Migration',
-    '04-transition',
-    'World',
-    'AI Scale',
-    '05-ai-driven',
-    '13-otel-collection',
-    '06-streams',
-    '07-ki-demo',
-    'system-model',
-    '08-discovery',
-    'Nightshift ↗',
-    'Nightshift',
-    'NS Hero',
-    'NS Architecture',
-    'NS Capabilities',
-    'AI Index',
-    'NS Brain',
-    'AI Economics',
-    'NS Live Demo',
-    'NS Reveal',
-    'Thank You',
+    'Safe Harbor',
+    'K8s Investigations',
+    'Columnar Engine',
+    'Easy Button (K8s)',
+    'Alert → Answer',
+    'Workflows',
+    'Discover Metrics',
+    'MCP / Claude',
+    '→ Live Demo',
+    'Common Cases',
+    'Turn It On',
   ],
 
   pdfOverrides: {
-    'storage.html': {
-      extra: `
-        document.querySelectorAll('.odo-slot').forEach(slot => {
-          const strip = slot.querySelector('.odo-strip');
-          strip.style.transition = 'none';
-          strip.style.transform = 'translateY(-' + ((30 + parseInt(slot.dataset.target)) * 152) + 'px)';
-        });
-        const arrow = document.getElementById('arrow');
-        arrow.style.transition = 'none'; arrow.style.opacity = '1';
-        const card = document.getElementById('card-new');
-        card.style.transition = 'none'; card.style.opacity = '1'; card.style.transform = 'none';
-        const num = document.getElementById('new-number');
-        num.style.transition = 'none'; num.style.opacity = '1';
-        num.style.transform = 'scale(1)'; num.style.filter = 'none';
-      `,
-      wait: 300,
-    },
-    'cheaper.html': {
-      extra: `
-        const n = document.getElementById('big-num');
-        n.style.transition = 'none'; n.style.opacity = '1';
-        n.style.transform = 'scale(1)'; n.style.filter = 'none';
-        const l = document.getElementById('hero-label');
-        l.style.transition = 'none'; l.style.opacity = '1'; l.style.transform = 'none';
-      `,
-      wait: 200,
-    },
-    'migrate.html': {
-      extra: `
-        for (let i = 0; i < 5; i++) {
-          const pill = document.getElementById('pill-' + i);
-          pill.classList.remove('pill-ready');
-          pill.classList.add('pill-migrated');
-          pill.textContent = 'Migrated';
-        }
-        document.getElementById('progress-fill').style.transition = 'none';
-        document.getElementById('progress-fill').style.width = '100%';
-        document.getElementById('progress-label').classList.add('show');
-      `,
-      wait: 200,
-    },
     'kubernetes.html': {
       extra: ``,
       wait: 300,
     },
+    'alert-to-answer.html': {
+      // let the flow sweep + answer card scale-in settle
+      wait: 3200,
+    },
+    'common-cases.html': {
+      // grid tiles + shipped-alert chips
+      wait: 1600,
+    },
+    'workflows.html': {
+      // panels + capability chips settle
+      wait: 1400,
+    },
+    'discover-metrics.html': {
+      // app panel + chart grid settle
+      wait: 1200,
+    },
+    'demo-transition.html': {
+      wait: 1600,
+    },
+    'intro-presenters.html': {
+      wait: 1400,
+    },
   },
+
+  // Backup slides — pull in live if the conversation goes there
+  // (e.g. "does Kibana really speak PromQL?" → promql.html)
   disabled: [
-    'nightshift-business-model.html',
+    'promql.html',
+    'plain-english.html',
+    'prometheus.html',    // removed from deck — kept as a backup ("meet SREs where they are")
+    'hook-3am.html',      // removed from deck — kept as a backup (the "3 AM" hook)
+    'metrics-myth.html',  // removed from deck — kept as a backup
+    'competitive.html',   // removed from deck — kept as a backup proof-points slide
   ],
 };
