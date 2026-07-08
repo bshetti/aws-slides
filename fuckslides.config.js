@@ -8,24 +8,26 @@ module.exports = {
     'cover.html',                 // 1  retitled → webinar name
     'safe-harbor.html',           // 2
     'intro-presenters.html',      // 3  NEW — "Let's talk about K8s investigations"
-    'columnar-metrics-tech.html', // 4  reuse — "Elastic's new columnar metrics engine"
-    'kubernetes.html',            // 5  reuse — the easy button (OOTB K8s)
-    'alert-to-answer.html',       // 6  NEW
-    'workflows.html',             // 7  NEW — Workflows run the investigation (Agents + Skills)
-    'discover-metrics.html',      // 8  NEW — analyze metrics in Discover
-    'mcp-demo.html',              // 9  reuse — agentic / MCP in Claude
-    'demo-transition.html',       // 10 NEW  → LIVE DEMO (Elastic UI, then Claude/MCP)
-    'common-cases.html',          // 11 NEW  (return from demo)
-    'thank-you.html',             // 12 reuse, retitled to CTA / close
+    'hook-3am.html',              // 4  the "3 AM" hook — it's 3am and you have these issues
+    'alert-to-answer.html',       // 5  NEW — "the investigation runs before you open the alert"
+    'columnar-metrics-tech.html', // 6  reuse — "Elastic's new columnar metrics engine"
+    'kubernetes.html',            // 7  reuse — the easy button (OOTB K8s)
+    'workflows.html',             // 8  NEW — Workflows run the investigation (Agents + Skills)
+    'discover-metrics.html',      // 9  NEW — analyze metrics in Discover
+    'mcp-demo.html',              // 10 reuse — agentic / MCP in Claude
+    'demo-transition.html',       // 11 NEW  → LIVE DEMO (Elastic UI, then Claude/MCP)
+    'common-cases.html',          // 12 NEW  (return from demo)
+    'thank-you.html',             // 13 reuse, retitled to CTA / close
   ],
 
   labels: [
     'Cover',
     'Safe Harbor',
     'K8s Investigations',
+    '3 AM Hook',
+    'Alert → Answer',
     'Columnar Engine',
     'Easy Button (K8s)',
-    'Alert → Answer',
     'Workflows',
     'Discover Metrics',
     'MCP / Claude',
@@ -69,7 +71,6 @@ module.exports = {
     'promql.html',
     'plain-english.html',
     'prometheus.html',    // removed from deck — kept as a backup ("meet SREs where they are")
-    'hook-3am.html',      // removed from deck — kept as a backup (the "3 AM" hook)
     'metrics-myth.html',  // removed from deck — kept as a backup
     'competitive.html',   // removed from deck — kept as a backup proof-points slide
   ],
