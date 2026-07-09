@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tool, skill, or workflow?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1280px; height: 720px; overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #fff;
+    }
+
+    .slide {
+      width: 1280px; height: 720px;
+      display: flex; flex-direction: column;
+      padding: 32px 66px 16px;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bar-in {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes num-pop {
+      from { opacity: 0; transform: scale(1.15); filter: blur(5px); }
+      to   { opacity: 1; transform: scale(1);    filter: blur(0); }
+    }
+
+    .title {
+      font-size: 40px; font-weight: 900; line-height: 1.06;
+      letter-spacing: -0.02em; color: #0D0D0D;
+      margin-bottom: 4px;
+      opacity: 0; animation: fade-up 0.55s ease forwards 0.1s;
+    }
+    .title .blue { color: #1D55E0; }
+    .subtitle {
+      font-size: 15.5px; font-weight: 500; color: #7A8499;
+      margin-bottom: 14px;
+      opacity: 0; animation: fade-up 0.55s ease forwards 0.22s;
+    }
+
+    .body {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    /* ── Three-card row ── */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      border-radius: 14px;
+      border: 1px solid #DDE1EE;
+      background: #F2F5FB;
+      padding: 16px 18px 18px;
+      display: flex; flex-direction: column;
+      opacity: 0;
+    }
+    .card:nth-child(1) { animation: card-in 0.5s cubic-bezier(0.22,1,0.36,1) both 0.35s; }
+    .card:nth-child(2) { animation: card-in 0.5s cubic-bezier(0.22,1,0.36,1) both 0.45s; }
+    .card:nth-child(3) { animation: card-in 0.5s cubic-bezier(0.22,1,0.36,1) both 0.55s; }
+
+    .card-head { display: flex; align-items: center; gap: 11px; margin-bottom: 9px; }
+    .badge {
+      flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; color: #fff;
+    }
+    .card:nth-child(1) .badge { background: #9AA4C4; }
+    .card:nth-child(2) .badge { background: #5B7FE0; }
+    .card:nth-child(3) .badge { background: #1D55E0; }
+
+    .card-name { font-size: 18px; font-weight: 800; color: #0D0D0D; letter-spacing: -0.01em; }
+    .card-tag  { font-size: 11px; font-weight: 600; color: #8090B0; margin-top: 1px; }
+
+    .card-label {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #A8B2CC;
+      margin-bottom: 4px;
+      padding-top: 9px; border-top: 1px solid #E2E6F0;
+    }
+    .card-when {
+      font-size: 12.5px; font-weight: 400; color: #3A4060; line-height: 1.42;
+    }
+    .card-when b { font-weight: 700; color: #0D0D0D; }
+
+    /* ── Diagram: shipped workflow example ── */
+    .diagram-label {
+      font-size: 12px; font-weight: 600; color: #7A8499;
+      margin-bottom: 8px;
+      opacity: 0; animation: fade-up 0.5s ease forwards 0.7s;
+    }
+    .diagram-label b { color: #1D55E0; font-weight: 800; }
+    .flow { display: flex; align-items: flex-start; gap: 8px; }
+    .farrow {
+      flex: 0 0 auto; margin-top: 20px;
+      font-size: 18px; font-weight: 700; color: #C7CEDE;
+      opacity: 0; animation: fade-up 0.4s ease forwards 1.05s;
+    }
+    .fnode {
+      flex: 1; min-width: 0;
+      background: #F2F5FB; border: 1px solid #DDE1EE; border-radius: 12px;
+      padding: 10px 13px 11px;
+      display: flex; flex-direction: column; gap: 4px;
+      opacity: 0;
+      animation: card-in 0.45s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .fnode-num {
+      width: 19px; height: 19px; border-radius: 6px;
+      background: #1D55E0; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 900; margin-bottom: 2px;
+    }
+    .fnode-title { font-size: 12.5px; font-weight: 800; color: #0D0D0D; }
+    .fnode-sub { font-size: 10.5px; font-weight: 400; color: #7A8499; line-height: 1.3; }
+
+    .fbranch { display: flex; flex-direction: column; gap: 3px; margin-top: 1px; }
+    .fbranch-row { font-size: 10.5px; color: #3A4060; display: flex; align-items: center; gap: 5px; line-height: 1.3; }
+    .fbranch-tag {
+      flex-shrink: 0; font-size: 8.5px; font-weight: 800; color: #fff;
+      padding: 1px 6px; border-radius: 999px;
+    }
+    .fbranch-tag.yes { background: #1D55E0; }
+    .fbranch-tag.no  { background: #9AA4C4; }
+
+    .fnode-answer { background: #1D55E0; border-color: #1D55E0; }
+    .fnode-answer .fnode-num { background: rgba(255,255,255,0.25); }
+    .fnode-answer .fnode-title { color: #fff; }
+    .fnode-answer .fnode-sub { color: rgba(255,255,255,0.85); }
+
+    /* ── Bottom evidence bar ── */
+    .bar {
+      display: flex; align-items: center; gap: 0;
+      background: #1D55E0;
+      border-radius: 14px;
+      padding: 13px 26px;
+      opacity: 0;
+      animation: bar-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards 1.4s;
+      flex-shrink: 0;
+    }
+    .bar-lead {
+      flex: 0 0 175px;
+      font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.75);
+      line-height: 1.3; letter-spacing: -0.005em;
+      padding-right: 20px; border-right: 1px solid rgba(255,255,255,0.25);
+    }
+    .bar-stats { flex: 1; display: flex; }
+    .bar-stat {
+      flex: 1; text-align: center; padding: 0 14px;
+    }
+    .bar-stat + .bar-stat { border-left: 1px solid rgba(255,255,255,0.22); }
+    .bar-num {
+      font-size: 27px; font-weight: 900; color: #fff; letter-spacing: -0.02em; line-height: 1;
+      opacity: 0; animation: num-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both var(--d);
+    }
+    .bar-cap { font-size: 10.5px; font-weight: 500; color: rgba(255,255,255,0.82); line-height: 1.3; margin-top: 4px; }
+
+    .footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 8px; flex-shrink: 0;
+    }
+    .footer-note { font-size: 10px; font-weight: 500; color: #A8B2CC; }
+  </style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="title">Tool, skill, or <span class="blue">workflow?</span></div>
+  <div class="subtitle">Match the delivery mechanism to the job it needs to do — we measured it, rather than argued it.</div>
+
+  <div class="body">
+
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="badge">T</div>
+          <div>
+            <div class="card-name">Tool</div>
+            <div class="card-tag">Atomic action</div>
+          </div>
+        </div>
+        <div class="card-label">When</div>
+        <div class="card-when">The capability is a single data lookup or action — a query, a fetch, a write. Fixed inputs, fixed output: <b>no reasoning required</b>.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="badge">S</div>
+          <div>
+            <div class="card-name">Skill</div>
+            <div class="card-tag">Knowledge, human in the loop</div>
+          </div>
+        </div>
+        <div class="card-label">When</div>
+        <div class="card-when">The value is <b>domain knowledge</b> and methodology — a person is in the loop, reviewing as it goes. A strong skill can even <b>tie</b> a workflow on accuracy.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="badge">W</div>
+          <div>
+            <div class="card-name">Workflow</div>
+            <div class="card-tag">Fixed execution</div>
+          </div>
+        </div>
+        <div class="card-label">When</div>
+        <div class="card-when">The run is <b>unattended</b> or alert-triggered, must hold up on cheaper models, or needs a low-variance floor — the same answer, every time.</div>
+      </div>
+
+    </div>
+
+    <div class="diagram">
+      <div class="diagram-label">Concretely — the <b>CrashLoopBackOff workflow</b> we ship checks things in order, branches on what it finds, and returns to synthesize</div>
+      <div class="flow">
+        <div class="fnode" style="animation-delay:0.75s">
+          <div class="fnode-num">1</div>
+          <div class="fnode-title">Characterize</div>
+          <div class="fnode-sub">Termination reason &middot; restarts &middot; CPU / memory utilization</div>
+        </div>
+        <div class="farrow">&rarr;</div>
+        <div class="fnode" style="animation-delay:0.9s">
+          <div class="fnode-num">2</div>
+          <div class="fnode-title">Branch: OOMKilled?</div>
+          <div class="fbranch">
+            <div class="fbranch-row"><span class="fbranch-tag yes">Yes</span>ML memory-anomaly check</div>
+            <div class="fbranch-row"><span class="fbranch-tag no">No</span>Read logs, AI-classify pattern</div>
+          </div>
+        </div>
+        <div class="farrow">&rarr;</div>
+        <div class="fnode" style="animation-delay:1.05s">
+          <div class="fnode-num">3</div>
+          <div class="fnode-title">Corroborate</div>
+          <div class="fnode-sub">Environment scope vs. 7-day baseline &middot; recent K8s changes</div>
+        </div>
+        <div class="farrow">&rarr;</div>
+        <div class="fnode fnode-answer" style="animation-delay:1.2s">
+          <div class="fnode-num">4</div>
+          <div class="fnode-title">Synthesize</div>
+          <div class="fnode-sub">Root-cause hypothesis + evidence</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="bar-lead">What a workflow buys you, measured against a skill or bare agent</div>
+      <div class="bar-stats">
+        <div class="bar-stat">
+          <div class="bar-num" style="--d:1.55s">10&times;</div>
+          <div class="bar-cap">more consistent run-to-run — a workflow gives the same answer every time, even on premium models</div>
+        </div>
+        <div class="bar-stat">
+          <div class="bar-num" style="--d:1.7s">~90%</div>
+          <div class="bar-cap">accuracy a workflow holds on a budget model — skills &amp; bare agents fell to 10&ndash;60%</div>
+        </div>
+        <div class="bar-stat">
+          <div class="bar-num" style="--d:1.85s">0</div>
+          <div class="bar-cap">agents needed — a workflow runs itself the moment an alert fires</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span class="footer-note">Internal evaluation harness &middot; Opus &amp; Haiku</span>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 687.5 235.6" style="height:20px;width:auto;display:block"><title>elastic</title><path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/><path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/><path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/><path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/><path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/><path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/><path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/><path fill="#1a1a1a" d="M330.8 165.5l4.7-.5.3 9.6a240.62 240.62 0 0 1-31.8 2.6q-17.55 0-24.9-10.2c-4.9-6.8-7.3-17.4-7.3-31.7q0-42.9 34.1-42.9c11 0 19.2 3.1 24.6 9.2s8.1 15.8 8.1 28.9l-.7 9.3h-53.8c0 9 1.6 15.7 4.9 20s8.9 6.5 17 6.5a230 230 0 0 0 24.8-.8zm-4.4-35.3c0-10-1.6-17.1-4.8-21.2s-8.4-6.2-15.6-6.2-12.7 2.2-16.3 6.5-5.5 11.3-5.6 20.9h42.3zm29.2 45.5v-117h12.2v117h-12.2zm89.3-56.9v40.1c0 4.1 10.1 4.9 10.1 4.9l-.6 10.8c-8.6 0-15.7.7-20-3.4a71.68 71.68 0 0 1-29.3 6.1c-7.5 0-13.2-2.1-17.1-6.4s-5.9-10.3-5.9-18.3 2-13.8 6-17.5 10.3-6.1 18.9-6.9l25.6-2.4v-7c0-5.5-1.2-9.5-3.6-11.9s-5.7-3.6-9.8-3.6h-32.1V92.5h31.3c9.2 0 15.9 2.1 20.1 6.4s6.4 10.9 6.4 19.9zM394.7 152c0 10 4.1 15 12.4 15a65.27 65.27 0 0 0 21.8-3.7l3.7-1.3v-26.9l-24.1 2.3c-4.9.4-8.4 1.8-10.6 4.2s-3.2 5.9-3.2 10.4zm97.9-48.6c-11.8 0-17.8 4.1-17.8 12.4 0 3.8 1.4 6.5 4.1 8.1s8.9 3.2 18.6 4.9 16.5 4 20.5 7.1 6 8.7 6 17.1-2.7 14.5-8.1 18.4-13.2 5.9-23.6 5.9c-6.7 0-29.2-2.5-29.2-2.5l.7-10.6c12.9 1.2 22.3 2.2 28.6 2.2s11.1-1 14.4-3 5-5.4 5-10.1-1.4-7.9-4.2-9.6-9-3.3-18.6-4.8-16.4-3.7-20.4-6.7-6-8.4-6-16.3 2.8-13.8 8.4-17.6 12.6-5.7 20.9-5.7c6.6 0 29.6 1.7 29.6 1.7V105c-12.1-.7-22-1.6-28.9-1.6zm90.4 1.4h-25.9v39c0 9.3.7 15.5 2 18.4s4.6 4.4 9.7 4.4l14.5-1 .8 10.1a111.1 111.1 0 0 1-16.6 1.8c-8.5 0-14.3-2.1-17.6-6.2s-4.9-12-4.9-23.6v-42.9h-11.6V94.2H545v-25h12.1v24.9H583v10.7zm17-29.1V61.6h12.2v14.2zm0 100V94.2h12.2v81.5H600zm65.2-83.2c3.6 0 9.7.7 18.3 2l3.9.5-.5 9.9a187.31 187.31 0 0 0-19.2-1.5c-9.2 0-15.5 2.2-18.8 6.6s-5 12.6-5 24.5 1.5 20.2 4.6 24.9 9.5 7 19.3 7l19.2-1.5.5 10.1c-10.1 1.5-17.7 2.3-22.7 2.3-12.7 0-21.5-3.3-26.3-9.8s-7.3-17.5-7.3-33 2.6-26.4 7.8-32.6 14-9.4 26.2-9.4z"/></svg>
+  </div>
+
+</div>
+<script src="/js/fuckslides.js"></script>
+</body>
+</html>

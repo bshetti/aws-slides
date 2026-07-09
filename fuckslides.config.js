@@ -12,12 +12,14 @@ module.exports = {
     'alert-to-answer.html',       // 5  NEW — "the investigation runs before you open the alert"
     'columnar-metrics-tech.html', // 6  reuse — "Elastic's new columnar metrics engine"
     'kubernetes.html',            // 7  reuse — the easy button (OOTB K8s)
-    'workflows.html',             // 8  NEW — Workflows run the investigation (Agents + Skills)
-    'discover-metrics.html',      // 9  NEW — analyze metrics in Discover
-    'mcp-demo.html',              // 10 reuse — agentic / MCP in Claude
-    'demo-transition.html',       // 11 NEW  → LIVE DEMO (Elastic UI, then Claude/MCP)
-    'common-cases.html',          // 12 NEW  (return from demo)
-    'thank-you.html',             // 13 reuse, retitled to CTA / close
+    'skills-vs-workflows.html',   // 8  NEW — Tool vs Skill vs Workflow decision rule
+    'workflows.html',             // 9  NEW — Workflows run the investigation (Agents + Skills)
+    'discover-metrics.html',      // 10 NEW — analyze metrics in Discover
+    'mcp-demo.html',              // 11 reuse — agentic / MCP in Claude
+    'demo-mechanism.html',        // 12 NEW — how we cause it + what signals light up
+    'demo-transition.html',       // 13 NEW  → LIVE DEMO (Elastic UI, then Claude/MCP)
+    'common-cases.html',          // 14 NEW  (return from demo)
+    'thank-you.html',             // 15 reuse, retitled to CTA / close
   ],
 
   labels: [
@@ -28,9 +30,11 @@ module.exports = {
     'Alert → Answer',
     'Columnar Engine',
     'Easy Button (K8s)',
+    'Skill vs Workflow',
     'Workflows',
     'Discover Metrics',
     'MCP / Claude',
+    'How We Break It',
     '→ Live Demo',
     'Common Cases',
     'Turn It On',
@@ -49,6 +53,10 @@ module.exports = {
       // grid tiles + shipped-alert chips
       wait: 1600,
     },
+    'skills-vs-workflows.html': {
+      // cards + workflow diagram + evidence bar stats settle
+      wait: 2500,
+    },
     'workflows.html': {
       // panels + capability chips settle
       wait: 1400,
@@ -56,6 +64,10 @@ module.exports = {
     'discover-metrics.html': {
       // app panel + chart grid settle
       wait: 1200,
+    },
+    'demo-mechanism.html': {
+      // incident/signals/conclusion flow + arrows settle
+      wait: 1500,
     },
     'demo-transition.html': {
       wait: 1600,
