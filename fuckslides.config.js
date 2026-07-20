@@ -5,39 +5,29 @@ module.exports = {
   slidesDir: 'slides',
 
   slides: [
-    'cover.html',                 // 1  retitled → webinar name
-    'safe-harbor.html',           // 2
-    'intro-presenters.html',      // 3  NEW — "Let's talk about K8s investigations"
-    'hook-3am.html',              // 4  the "3 AM" hook — it's 3am and you have these issues
-    'alert-to-answer.html',       // 5  NEW — "the investigation runs before you open the alert"
-    'columnar-metrics-tech.html', // 6  reuse — "Elastic's new columnar metrics engine"
-    'kubernetes.html',            // 7  reuse — the easy button (OOTB K8s)
-    'skills-vs-workflows.html',   // 8  NEW — Tool vs Skill vs Workflow decision rule
-    'workflows.html',             // 9  NEW — Workflows run the investigation (Agents + Skills)
-    'discover-metrics.html',      // 10 NEW — analyze metrics in Discover
-    'mcp-demo.html',              // 11 reuse — agentic / MCP in Claude
-    'demo-mechanism.html',        // 12 NEW — how we cause it + what signals light up
-    'demo-transition.html',       // 13 NEW  → LIVE DEMO (Elastic UI, then Claude/MCP)
-    'common-cases.html',          // 14 NEW  (return from demo)
-    'thank-you.html',             // 15 reuse, retitled to CTA / close
+    'alert-to-answer.html',
+    'columnar-metrics-tech.html',
+    'skills-vs-workflows.html',
+    'workflows.html',
+    'discover-metrics.html',
+    'kubernetes.html',
+    'mcp-demo.html',
+    'aws-ootb.html',
+    'aws-turn-it-on.html',
+    'thank-you.html',
   ],
 
   labels: [
-    'Cover',
-    'Safe Harbor',
-    'K8s Investigations',
-    '3 AM Hook',
     'Alert → Answer',
     'Columnar Engine',
-    'Easy Button (K8s)',
     'Skill vs Workflow',
     'Workflows',
     'Discover Metrics',
+    'Easy Button (K8s)',
     'MCP / Claude',
-    'How We Break It',
-    '→ Live Demo',
-    'Common Cases',
+    'Lovable AWS OOTB',
     'Turn It On',
+    'Close',
   ],
 
   pdfOverrides: {
@@ -48,10 +38,6 @@ module.exports = {
     'alert-to-answer.html': {
       // let the flow sweep + answer card scale-in settle
       wait: 3200,
-    },
-    'common-cases.html': {
-      // grid tiles + shipped-alert chips
-      wait: 1600,
     },
     'skills-vs-workflows.html': {
       // cards + workflow diagram + evidence bar stats settle
@@ -65,14 +51,12 @@ module.exports = {
       // app panel + chart grid settle
       wait: 1200,
     },
-    'demo-mechanism.html': {
-      // incident/signals/conclusion flow + arrows settle
-      wait: 1500,
+    'aws-ootb.html': {
+      // kpi + service cards fade-ins settle
+      wait: 1200,
     },
-    'demo-transition.html': {
-      wait: 1600,
-    },
-    'intro-presenters.html': {
+    'aws-turn-it-on.html': {
+      // three panels card-in + discover sparkline grid render
       wait: 1400,
     },
   },
@@ -80,10 +64,17 @@ module.exports = {
   // Backup slides — pull in live if the conversation goes there
   // (e.g. "does Kibana really speak PromQL?" → promql.html)
   disabled: [
+    'cover.html',
+    'intro-presenters.html',
+    'hook-3am.html',
+    'demo-mechanism.html',
+    'demo-transition.html',
+    'common-cases.html',
+    'safe-harbor.html',
     'promql.html',
     'plain-english.html',
-    'prometheus.html',    // removed from deck — kept as a backup ("meet SREs where they are")
-    'metrics-myth.html',  // removed from deck — kept as a backup
-    'competitive.html',   // removed from deck — kept as a backup proof-points slide
+    'prometheus.html',
+    'metrics-myth.html',
+    'competitive.html',
   ],
 };
