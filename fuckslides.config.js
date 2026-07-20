@@ -13,6 +13,7 @@ module.exports = {
     'kubernetes.html',
     'mcp-demo.html',
     'aws-ootb.html',
+    'aws-coverage.html',
     'aws-turn-it-on.html',
     'thank-you.html',
   ],
@@ -26,6 +27,7 @@ module.exports = {
     'Easy Button (K8s)',
     'MCP / Claude',
     'Lovable AWS OOTB',
+    'AWS Coverage',
     'Turn It On',
     'Close',
   ],
@@ -54,6 +56,10 @@ module.exports = {
     'aws-ootb.html': {
       // kpi + service cards fade-ins settle
       wait: 1200,
+    },
+    'aws-coverage.html': {
+      // full-bleed coverage map fade-in
+      wait: 1000,
     },
     'aws-turn-it-on.html': {
       // three panels card-in + discover sparkline grid render
