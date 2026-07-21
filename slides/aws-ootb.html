@@ -8,127 +8,140 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1280px; height: 720px; overflow: hidden; font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; background: #F5F7FC; color: #0D0D0D; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
-    html, body {
-      width: 1280px; height: 720px; overflow: hidden;
-      font-family: 'Inter', -apple-system, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      background: #0A0F1C; color: #E8ECF4;
-    }
+    .slide { width: 1280px; height: 720px; padding: 28px 44px 16px; display: flex; flex-direction: column; }
 
-    /* ambient circles like source art */
-    .bg-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
-    .orb1 { width: 640px; height: 640px; right: -180px; top: -220px; background: radial-gradient(circle, #16233F 0%, rgba(11,17,30,0) 70%); }
-    .orb2 { width: 420px; height: 420px; right: 60px; bottom: -160px; background: radial-gradient(circle, #241436 0%, rgba(11,17,30,0) 70%); }
-    .orb3 { width: 360px; height: 360px; left: -140px; bottom: -150px; background: radial-gradient(circle, #0E2A26 0%, rgba(11,17,30,0) 70%); }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(12px);} to { opacity: 1; transform: translateY(0);} }
+    @keyframes shot-in { from { opacity: 0; transform: translateY(18px) scale(.985);} to { opacity: 1; } }
 
-    .slide { position: relative; z-index: 1; width: 1280px; height: 720px; padding: 44px 54px 24px; display: flex; flex-direction: column; }
+    .head { display: flex; align-items: flex-start; gap: 22px; opacity: 0; animation: fade-up .5s ease forwards .05s; flex-shrink: 0; }
+    .head-left { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .title { font-size: 37px; font-weight: 900; letter-spacing: -0.025em; line-height: 1.02; }
+    .title .accent { color: #12A594; }
+    .otel-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; background: rgba(18,165,148,0.10); border: 1px solid rgba(18,165,148,0.38); color: #0E8074; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; padding: 6px 14px; border-radius: 999px; white-space: nowrap; }
+    .otel-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #12A594; }
+    .subtitle { flex: 1; margin-top: 6px; max-width: 640px; font-size: 14px; font-weight: 500; color: #7A8499; }
 
-    @keyframes fade-up { from { opacity: 0; transform: translateY(14px);} to { opacity: 1; transform: translateY(0);} }
+    /* ── body: collage (left) + AI console (right) ── */
+    .body { flex: 1; min-height: 0; margin-top: 16px; display: flex; gap: 20px; }
 
-    .title { font-size: 46px; font-weight: 900; letter-spacing: -0.025em; line-height: 1.02; color: #fff; opacity: 0; animation: fade-up 0.5s ease forwards 0.05s; }
-    .title .accent { color: #2DD4BF; }
-    .subtitle { margin-top: 8px; font-size: 16px; font-weight: 500; color: #8A93A8; opacity: 0; animation: fade-up 0.5s ease forwards 0.15s; }
+    /* straight 2x2 grid filling the whole left section */
+    .stack { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; }
+    .shot { position: relative; min-height: 0; min-width: 0; border: 1px solid #CFD5E8; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 10px 26px rgba(20,30,60,0.16); opacity: 0; animation: shot-in .5s cubic-bezier(.22,1,.36,1) forwards; }
+    .shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
 
-    /* ── KPI stat cards ── */
-    .kpis { display: flex; gap: 16px; margin-top: auto; margin-bottom: 20px; opacity: 0; animation: fade-up 0.5s ease forwards 0.25s; }
-    .kpi { flex: 0 0 auto; min-width: 190px; background: #0F1728; border: 1px solid #1E293F; border-radius: 14px; padding: 20px 26px; }
-    .kpi-num { font-size: 54px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
-    .kpi-lbl { margin-top: 8px; font-size: 15px; font-weight: 500; color: #8A93A8; }
-    .t-teal { color: #2DD4BF; } .t-yellow { color: #F5C518; } .t-blue { color: #5B9DFF; } .t-red { color: #FF6274; }
+    .s-int  { animation-delay: .22s; }
+    .s-dash { animation-delay: .32s; }
+    .s-disc { animation-delay: .42s; }
+    .s-ec2  { animation-delay: .52s; }
 
-    /* ── Service cards ── */
-    .services { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: auto; opacity: 0; animation: fade-up 0.5s ease forwards 0.35s; }
-    .svc { background: #0F1728; border: 1px solid #1E293F; border-radius: 13px; padding: 18px 18px 20px; }
-    .svc-name { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
-    .svc-stats { margin-top: 8px; display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 500; color: #8A93A8; }
-    .svc-bar { margin-top: 14px; height: 9px; border-radius: 5px; background: #1B2740; overflow: hidden; display: flex; }
-    .svc-bar .alert { background: #2DD4BF; }
-    .svc-bar .slo { background: #F5C518; }
+    /* ── AI agent console ── */
+    .agent { width: 312px; flex-shrink: 0; display: flex; flex-direction: column; opacity: 0; animation: fade-up .55s ease forwards .7s; }
+    .console { flex: 1; min-height: 0; background: #0D1117; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 16px 40px rgba(13,17,23,0.30); }
+    .con-hdr { height: 26px; background: #161B22; border-bottom: 1px solid #30363D; padding: 0 11px; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .cdot { width: 8px; height: 8px; border-radius: 50%; }
+    .con-title { font-size: 8.5px; font-weight: 500; color: #8B949E; margin-left: 4px; }
+    .con-body { flex: 1; min-height: 0; padding: 11px 14px; overflow: hidden; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10px; line-height: 1.55; color: #CDD6E0; display: flex; flex-direction: column; }
+    .cl { min-height: 1em; }
+    .cg { color: #3FB950; } .cy { color: #E3B341; } .cm { color: #8B949E; } .cb { font-weight: 700; color: #F0F6FF; }
+    .cursor { display: inline-block; width: 5px; height: 11px; background: #3FB950; vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
 
-    /* ── Depth matrix ── */
-    .depth { flex: 1; min-height: 0; margin-top: 14px; background: #0E1626; border: 1px solid #1E293F; border-radius: 14px; padding: 14px 20px 12px; opacity: 0; animation: fade-up 0.5s ease forwards 0.45s; display: flex; flex-direction: column; }
-    .depth-h { font-size: 17px; font-weight: 800; color: #fff; }
-    .depth-sub { font-size: 11px; font-weight: 500; color: #6C7690; margin-top: 1px; margin-bottom: 6px; }
-
-    .matrix { flex: 1; min-height: 0; display: grid; grid-template-columns: 150px repeat(6, 1fr); grid-auto-rows: 1fr; font-size: 11px; }
-    .mh { font-size: 12px; font-weight: 800; color: #C6CEDE; display: flex; align-items: center; }
-    .mh.col { justify-content: flex-start; padding-left: 20px; }
-    .rlbl { font-weight: 700; color: #C6CEDE; display: flex; align-items: center; }
-    .cell { display: flex; align-items: center; gap: 6px; padding-left: 4px; }
-    .cell.zebra { background: rgba(255,255,255,0.022); }
-    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .d-teal { background: #2DD4BF; } .d-yellow { background: #F5C518; } .d-none { background: #37415A; }
-    .cell .lab { font-weight: 500; color: #B7C0D4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .legend { display: flex; align-items: center; gap: 24px; margin-top: 8px; font-size: 11.5px; color: #8A93A8; }
-    .legend .li { display: flex; align-items: center; gap: 7px; }
-
-    .footer { position: absolute; right: 40px; bottom: 16px; }
+    .footer { display: flex; justify-content: flex-end; padding-top: 6px; flex-shrink: 0; }
   </style>
 </head>
 <body>
-  <div class="bg-orb orb1"></div>
-  <div class="bg-orb orb2"></div>
-  <div class="bg-orb orb3"></div>
+<div class="slide">
 
-  <div class="slide">
-    <div class="title">A Lovable <span class="accent">AWS</span> OOTB Experience</div>
-    <div class="subtitle">A starter library spanning infra, app edge, serverless, databases, and queues — with alert + SLO templates ready to tune.</div>
-
-    <!-- KPI cards -->
-    <div class="kpis">
-      <div class="kpi"><div class="kpi-num t-blue">6</div><div class="kpi-lbl">AWS integrations</div></div>
-      <div class="kpi"><div class="kpi-num t-teal">39</div><div class="kpi-lbl">alert rules</div></div>
-      <div class="kpi"><div class="kpi-num t-yellow">8</div><div class="kpi-lbl">SLO templates</div></div>
+  <div class="head">
+    <div class="head-left">
+      <div class="title">A Lovable <span class="accent">AWS</span> OOTB Experience</div>
+      <div class="otel-pill"><span class="dot"></span>Built on OpenTelemetry &middot; AWS metrics pulled as OTLP</div>
     </div>
-
-    <!-- Service cards -->
-    <div class="services">
-      <div class="svc">
-        <div class="svc-name">EC2</div>
-        <div class="svc-stats"><span>7 alerts</span><span>1 SLOs</span></div>
-        <div class="svc-bar"><span class="alert" style="width:47%"></span><span class="slo" style="width:20%"></span></div>
-      </div>
-      <div class="svc">
-        <div class="svc-name">ECS</div>
-        <div class="svc-stats"><span>2 alerts</span><span>0 SLOs</span></div>
-        <div class="svc-bar"><span class="alert" style="width:14%"></span></div>
-      </div>
-      <div class="svc">
-        <div class="svc-name">ELB</div>
-        <div class="svc-stats"><span>6 alerts</span><span>2 SLOs</span></div>
-        <div class="svc-bar"><span class="alert" style="width:42%"></span><span class="slo" style="width:40%"></span></div>
-      </div>
-      <div class="svc">
-        <div class="svc-name">Lambda</div>
-        <div class="svc-stats"><span>9 alerts</span><span>2 SLOs</span></div>
-        <div class="svc-bar"><span class="alert" style="width:60%"></span><span class="slo" style="width:30%"></span></div>
-      </div>
-      <div class="svc">
-        <div class="svc-name">RDS</div>
-        <div class="svc-stats"><span>11 alerts</span><span>1 SLOs</span></div>
-        <div class="svc-bar"><span class="alert" style="width:74%"></span><span class="slo" style="width:14%"></span></div>
-      </div>
-      <div class="svc">
-        <div class="svc-name">SQS</div>
-        <div class="svc-stats"><span>4 alerts</span><span>2 SLOs</span></div>
-        <div class="svc-bar"><span class="alert" style="width:32%"></span><span class="slo" style="width:40%"></span></div>
-      </div>
-    </div>
-
-    <div class="footer">
-      <svg width="24" height="23" viewBox="0 0 245 236" xmlns="http://www.w3.org/2000/svg">
-        <path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#fff"/>
-        <path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/>
-        <path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/>
-        <path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/>
-        <path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/>
-        <path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/>
-        <path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/>
-      </svg>
-    </div>
+    <div class="subtitle">Add your keys — managed dashboards, SLOs &amp; alerts light up, and the Elastic AI Agent is ready to investigate.</div>
   </div>
+
+  <div class="body">
+
+    <!-- collage of real screenshots -->
+    <div class="stack">
+      <div class="shot s-int"><img src="assets/aws-integration.png" alt="Add AWS CloudWatch integration"></div>
+      <div class="shot s-dash"><img src="assets/aws-dashboards.png" alt="AWS OTel dashboards"></div>
+      <div class="shot s-disc"><img src="assets/aws-discover-ec2.png" alt="EC2 metrics in Discover"></div>
+      <div class="shot s-ec2"><img src="assets/aws-ec2-detail.png" alt="EC2 Instance Detail dashboard"></div>
+    </div>
+
+    <!-- AI agent console -->
+    <div class="agent">
+      <div class="console">
+        <div class="con-hdr">
+          <span class="cdot" style="background:#FF5F57"></span><span class="cdot" style="background:#FEBC2E"></span><span class="cdot" style="background:#28C840"></span>
+          <span class="con-title mono">elastic-ai &middot; aws root cause</span>
+        </div>
+        <div class="con-body" id="con-body"><span class="cursor" id="cursor"></span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <svg width="24" height="23" viewBox="0 0 245 236" xmlns="http://www.w3.org/2000/svg">
+      <path d="M236.6 123.5a46.54 46.54 0 0 0-30.8-43.9A67 67 0 0 0 140.2 0 66.72 66.72 0 0 0 86 27.7a35.5 35.5 0 0 0-57.2 28.1A36.77 36.77 0 0 0 31 68.2a46.75 46.75 0 0 0-.1 88 66.66 66.66 0 0 0 119.6 51.6 35 35 0 0 0 21.7 7.6 35.51 35.51 0 0 0 35.5-35.5 36.77 36.77 0 0 0-2.2-12.4 47.08 47.08 0 0 0 31.1-44" fill="#1a1a1a"/>
+      <path d="M93 101.5l51.8 23.6L197 79.3a54.71 54.71 0 0 0 1.1-11.5 58.35 58.35 0 0 0-106.5-33l-8.7 45.1L93 101.5z" fill="#fed10a"/>
+      <path d="M39.4 156.3a56.62 56.62 0 0 0-1.1 11.7 58.58 58.58 0 0 0 107 32.9l8.6-44.9-11.5-22-52-23.7z" fill="#24bbb1"/>
+      <path d="M39.1 66.7l35.5 8.4 7.8-40.3a28 28 0 0 0-43.3 31.9" fill="#ef5098"/>
+      <path d="M36 75.2a39.1 39.1 0 0 0-1.7 73.7l49.8-45L75 84.4z" fill="#17a8e0"/>
+      <path d="M154.3 200.9a28 28 0 0 0 43.2-31.9l-35.4-8.3z" fill="#93c83e"/>
+      <path d="M161.5 151.4l39 9.1a39.1 39.1 0 0 0 1.7-73.7l-51 44.7z" fill="#0779a1"/>
+    </svg>
+  </div>
+
+</div>
+<script>
+'use strict';
+const LINES = [
+  { t: '> Scanning AWS metrics...', c: 'cg', d: 600 },
+  { t: '', d: 300 },
+  { t: 'Root cause hypothesis', c: 'cb', d: 460 },
+  { t: '(confidence: high)', c: 'cy', d: 180 },
+  { t: '', d: 240 },
+  { t: 'RDS db-prod-1 nearing its', d: 300 },
+  { t: 'connection ceiling as EC2', d: 200 },
+  { t: 'checkout tier burns CPU', d: 200 },
+  { t: 'credits under load.', d: 200 },
+  { t: '', d: 240 },
+  { t: 'Evidence:', c: 'cy', d: 360 },
+  { t: '• DBConnections 96% of max', c: 'cm', d: 210 },
+  { t: '• CPUCreditBalance depleted', c: 'cm', d: 210 },
+  { t: '• ELB target 5XX: 8%', c: 'cm', d: 210 },
+  { t: '• SQS DLQ depth rising', c: 'cm', d: 210 },
+  { t: '', d: 240 },
+  { t: 'Next steps:', c: 'cy', d: 360 },
+  { t: '1. Scale RDS connections', d: 210 },
+  { t: '2. Move EC2 off t3 burst', d: 210 },
+  { t: '3. Drain the SQS DLQ', d: 210 },
+  { t: '', d: 280 },
+  { t: '> Analysis complete ✓', c: 'cg', d: 280 },
+];
+const body = document.getElementById('con-body');
+const cursor = document.getElementById('cursor');
+function runLines(lines, delay, cb) {
+  lines.forEach(line => {
+    delay += line.d;
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'cl' + (line.c ? ' ' + line.c : '');
+      el.textContent = line.t;
+      body.insertBefore(el, cursor);
+    }, delay);
+  });
+  setTimeout(cb, lines.reduce((s, l) => s + l.d, delay) + 3500);
+}
+function restart() { while (body.firstChild !== cursor) body.removeChild(body.firstChild); runLines(LINES, 900, restart); }
+runLines(LINES, 900, restart);
+</script>
 <script src="/js/fuckslides.js"></script>
 </body>
 </html>

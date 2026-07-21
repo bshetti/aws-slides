@@ -54,8 +54,8 @@ module.exports = {
       wait: 1200,
     },
     'aws-ootb.html': {
-      // kpi + service cards fade-ins settle
-      wait: 1200,
+      // overlapping screenshots shot-in + AI agent console populates
+      wait: 5200,
     },
     'aws-coverage.html': {
       // full-bleed coverage map fade-in
